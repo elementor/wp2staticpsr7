@@ -6,6 +6,9 @@ functionality like query string parsing.  Currently missing
 ServerRequestInterface and UploadedFileInterface; a pull request for these features is welcome.
 
 
+[![Build Status](https://travis-ci.org/guzzle/psr7.svg?branch=master)](https://travis-ci.org/guzzle/psr7)
+
+
 # Stream implementation
 
 This package comes with a number of stream implementations and stream
