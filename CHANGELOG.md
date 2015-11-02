@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## next release
+
+* Now supporting negative offsets when seeking to SEEK_END.
+
 ## 1.2.0 - 2015-08-15
 
 * Body as `"0"` is now properly added to a response.
