@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## next release
+## 1.2.1 - 2015-11-02
 
 * Now supporting negative offsets when seeking to SEEK_END.
 
