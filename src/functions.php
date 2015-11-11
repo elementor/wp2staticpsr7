@@ -78,6 +78,7 @@ function stream_for($resource = '', array $options = [])
 {
     switch (gettype($resource)) {
         case 'string':
+        case 'integer':
             $stream = fopen('php://temp', 'r+');
             if ($resource !== '') {
                 fwrite($stream, $resource);
