@@ -19,8 +19,8 @@ class ServerRequestTest extends \PHPUnit_Framework_TestCase
                         'name' => 'MyFile.txt',
                         'type' => 'text/plain',
                         'tmp_name' => '/tmp/php/php1h4j1o',
-                        'error' => UPLOAD_ERR_OK,
-                        'size' => 123
+                        'error' => '0',
+                        'size' => '123'
                     ]
                 ],
                 [
@@ -39,8 +39,8 @@ class ServerRequestTest extends \PHPUnit_Framework_TestCase
                         'name' => '',
                         'type' => '',
                         'tmp_name' => '',
-                        'error' => UPLOAD_ERR_NO_FILE,
-                        'size' => 0
+                        'error' => '4',
+                        'size' => '0'
                     ]
                 ],
                 [
@@ -117,15 +117,15 @@ class ServerRequestTest extends \PHPUnit_Framework_TestCase
                         'name' => 'MyFile.txt',
                         'type' => 'text/plain',
                         'tmp_name' => '/tmp/php/php1h4j1o',
-                        'error' => UPLOAD_ERR_OK,
-                        'size' => 123
+                        'error' => '0',
+                        'size' => '123'
                     ],
                     'image_file' => [
                         'name' => '',
                         'type' => '',
                         'tmp_name' => '',
-                        'error' => UPLOAD_ERR_NO_FILE,
-                        'size' => 0
+                        'error' => '4',
+                        'size' => '0'
                     ]
                 ],
                 [
@@ -161,12 +161,12 @@ class ServerRequestTest extends \PHPUnit_Framework_TestCase
                             1 => '/tmp/php/php1h4j1o',
                         ],
                         'error' => [
-                            0 => UPLOAD_ERR_OK,
-                            1 => UPLOAD_ERR_OK,
+                            0 => '0',
+                            1 => '0',
                         ],
                         'size' => [
-                            0 => 123,
-                            1 => 7349,
+                            0 => '123',
+                            1 => '7349',
                         ],
                     ],
                     'nested' => [
@@ -192,17 +192,17 @@ class ServerRequestTest extends \PHPUnit_Framework_TestCase
                             ],
                         ],
                         'error' => [
-                            'other' => UPLOAD_ERR_OK,
+                            'other' => '0',
                             'test' => [
-                                0 => UPLOAD_ERR_OK,
-                                1 => UPLOAD_ERR_NO_FILE,
+                                0 => '0',
+                                1 => '4',
                             ],
                         ],
                         'size' => [
-                            'other' => 421,
+                            'other' => '421',
                             'test' => [
-                                0 => 32,
-                                1 => 0,
+                                0 => '32',
+                                1 => '0',
                             ]
                         ]
                     ],

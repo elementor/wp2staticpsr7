@@ -68,8 +68,8 @@ class ServerRequest extends Request implements ServerRequestInterface
 
         return new UploadedFile(
             $value['tmp_name'],
-            $value['size'],
-            $value['error'],
+            (int) $value['size'],
+            (int) $value['error'],
             $value['name'],
             $value['type']
         );
