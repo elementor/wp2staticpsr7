@@ -136,12 +136,27 @@ class ServerRequest extends Request implements ServerRequestInterface
     public static function getUriFromGlobals() {
         $uri = new Uri('');
 
-        return $uri
-            ->withScheme(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 'https' : 'http')
-            ->withHost($_SERVER['SERVER_NAME'])
-            ->withPort($_SERVER['SERVER_PORT'])
-            ->withPath(current(explode('?', $_SERVER['REQUEST_URI'])))
-            ->withQuery(isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '');
+        if (isset($_SERVER['HTTPS'])) {
+            $uri = $uri->withScheme($_SERVER['HTTPS'] == 'on' ? 'https' : 'http');
+        }
+
+        if (isset($_SERVER['SERVER_NAME'])) {
+            $uri = $uri->withHost($_SERVER['SERVER_NAME']);
+        }
+
+        if (isset($_SERVER['SERVER_PORT'])) {
+            $uri = $uri->withPort($_SERVER['SERVER_PORT']);
+        }
+
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $uri = $uri->withPath(current(explode('?', $_SERVER['REQUEST_URI'])));
+        }
+
+        if (isset($_SERVER['QUERY_STRING'])) {
+            $uri = $uri->withQuery($_SERVER['QUERY_STRING']);
+        }
+
+        return $uri;
     }
 
     /**
