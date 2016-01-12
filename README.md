@@ -28,7 +28,7 @@ $a = Psr7\stream_for('abc, ');
 $b = Psr7\stream_for('123.');
 $composed = new Psr7\AppendStream([$a, $b]);
 
-$composed->addStream(Psr7\stream_for(' Above all listen to me').
+$composed->addStream(Psr7\stream_for(' Above all listen to me'));
 
 echo $composed(); // abc, 123. Above all listen to me.
 ```
