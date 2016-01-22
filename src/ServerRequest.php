@@ -25,6 +25,60 @@ use Psr\Http\Message\UploadedFileInterface;
 class ServerRequest extends Request implements ServerRequestInterface
 {
     /**
+     * @var array
+     */
+    private $attributes = [];
+
+    /**
+     * @var array
+     */
+    private $cookieParams = [];
+
+    /**
+     * @var null|array|object
+     */
+    private $parsedBody;
+
+    /**
+     * @var array
+     */
+    private $queryParams = [];
+
+    /**
+     * @var array
+     */
+    private $serverParams;
+
+    /**
+     * @var array
+     */
+    private $uploadedFiles;
+
+    /**
+     * @param array $serverParams the value of $_SERVER superglobal
+     * @param array $uploadedFiles the value of $_FILES superglobal
+     * @param null|string $method HTTP method for the request.
+     * @param null|string|UriInterface $uri URI for the request.
+     * @param array $headers Headers for the message.
+     * @param string|resource|StreamInterface $body Message body.
+     * @param string $protocolVersion HTTP protocol version.
+     *
+     * @throws InvalidArgumentException for an invalid URI
+     */
+    public function __construct(
+        $method,
+        $uri,
+        array $headers = [],
+        $body = null,
+        $protocolVersion = '1.1',
+        array $serverParams = []
+    ) {
+        $this->serverParams = $serverParams;
+
+        parent::__construct($method, $uri, $headers, $body, $protocolVersion);
+    }
+
+    /**
      * Return an UploadedFile instance array.
      *
      * @param array  $files A array which respect $_FILES structure.
@@ -159,59 +213,6 @@ class ServerRequest extends Request implements ServerRequestInterface
         return $uri;
     }
 
-    /**
-     * @var array
-     */
-    private $attributes = [];
-
-    /**
-     * @var array
-     */
-    private $cookieParams = [];
-
-    /**
-     * @var null|array|object
-     */
-    private $parsedBody;
-
-    /**
-     * @var array
-     */
-    private $queryParams = [];
-
-    /**
-     * @var array
-     */
-    private $serverParams;
-
-    /**
-     * @var array
-     */
-    private $uploadedFiles;
-
-    /**
-     * @param array $serverParams the value of $_SERVER superglobal
-     * @param array $uploadedFiles the value of $_FILES superglobal
-     * @param null|string $method HTTP method for the request.
-     * @param null|string|UriInterface $uri URI for the request.
-     * @param array $headers Headers for the message.
-     * @param string|resource|StreamInterface $body Message body.
-     * @param string $protocolVersion HTTP protocol version.
-     *
-     * @throws InvalidArgumentException for an invalid URI
-     */
-    public function __construct(
-        $method,
-        $uri,
-        array $headers = [],
-        $body = null,
-        $protocolVersion = '1.1',
-        array $serverParams = []
-    ) {
-        $this->serverParams = $serverParams;
-
-        parent::__construct($method, $uri, $headers, $body, $protocolVersion);
-    }
 
     /**
      * {@inheritdoc}
