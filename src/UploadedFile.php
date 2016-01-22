@@ -150,7 +150,7 @@ class UploadedFile implements UploadedFileInterface
      */
     private function isStringNotEmpty($param)
     {
-        return is_string($param) && false == empty($param);
+        return is_string($param) && false === empty($param);
     }
 
     /**
