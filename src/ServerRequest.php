@@ -311,7 +311,7 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function getAttribute($attribute, $default = null)
     {
-        if (! array_key_exists($attribute, $this->attributes)) {
+        if (false === array_key_exists($attribute, $this->attributes)) {
             return $default;
         }
 
