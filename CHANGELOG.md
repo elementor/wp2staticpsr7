@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## next release
+## 1.2.2 - 2016-01-22
 
 * Added support for URIs without any authority.
 * Added support for HTTP 451 'Unavailable For Legal Reasons.'
