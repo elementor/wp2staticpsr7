@@ -55,8 +55,8 @@ class ServerRequest extends Request implements ServerRequestInterface
     private $uploadedFiles;
 
     /**
-     * @param array $serverParams the value of $_SERVER superglobal
-     * @param array $uploadedFiles the value of $_FILES superglobal
+     * @param array $serverParams the value of $_SERVER superglobal.
+     * @param array $uploadedFiles the value of $_FILES superglobal.
      * @param null|string $method HTTP method for the request.
      * @param null|string|UriInterface $uri URI for the request.
      * @param array $headers Headers for the message.
@@ -81,11 +81,11 @@ class ServerRequest extends Request implements ServerRequestInterface
     /**
      * Return an UploadedFile instance array.
      *
-     * @param array  $files A array which respect $_FILES structure.
+     * @param array $files A array which respect $_FILES structure.
      * @throws InvalidArgumentException for unrecognized values
      * @return array
      */
-    public static function normalizeFiles($files)
+    public static function normalizeFiles(array $files)
     {
         $normalized = [];
 
@@ -141,6 +141,7 @@ class ServerRequest extends Request implements ServerRequestInterface
     private static function normalizeNestedFileSpec(array $files = [])
     {
         $normalizedFiles = [];
+
         foreach (array_keys($files['tmp_name']) as $key) {
             $spec = [
                 'tmp_name' => $files['tmp_name'][$key],
@@ -156,7 +157,7 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Return a ServerRequest populated with superglobals :
+     * Return a ServerRequest populated with superglobals:
      * $_GET
      * $_POST
      * $_COOKIE
@@ -183,7 +184,7 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Get a Uri populated with values from $_SERVER
+     * Get a Uri populated with values from $_SERVER.
      *
      * @return UriInterface
      */
