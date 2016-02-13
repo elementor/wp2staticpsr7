@@ -47,21 +47,20 @@ class ServerRequest extends Request implements ServerRequestInterface
     /**
      * @var array
      */
-    private $serverParams;
+    private $serverParams = [];
 
     /**
      * @var array
      */
-    private $uploadedFiles;
+    private $uploadedFiles = [];
 
     /**
-     * @param array $serverParams the value of $_SERVER superglobal.
-     * @param array $uploadedFiles the value of $_FILES superglobal.
-     * @param null|string $method HTTP method for the request.
-     * @param null|string|UriInterface $uri URI for the request.
-     * @param array $headers Headers for the message.
-     * @param string|resource|StreamInterface $body Message body.
-     * @param string $protocolVersion HTTP protocol version.
+     * @param null|string $method HTTP method for the request
+     * @param null|string|UriInterface $uri URI for the request
+     * @param array $headers Headers for the message
+     * @param string|resource|StreamInterface $body Message body
+     * @param string $protocolVersion HTTP protocol version
+     * @param array $serverParams the value of $_SERVER superglobal
      *
      * @throws InvalidArgumentException for an invalid URI
      */
@@ -81,7 +80,7 @@ class ServerRequest extends Request implements ServerRequestInterface
     /**
      * Return an UploadedFile instance array.
      *
-     * @param array $files A array which respect $_FILES structure.
+     * @param array $files A array which respect $_FILES structure
      * @throws InvalidArgumentException for unrecognized values
      * @return array
      */
