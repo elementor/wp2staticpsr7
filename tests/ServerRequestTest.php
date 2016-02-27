@@ -438,7 +438,7 @@ class ServerRequestTest extends \PHPUnit_Framework_TestCase
         $request2 = $request1->withUploadedFiles($files);
 
         $this->assertNotSame($request2, $request1);
-        $this->assertEmpty($request1->getUploadedFiles());
+        $this->assertSame([], $request1->getUploadedFiles());
         $this->assertSame($files, $request2->getUploadedFiles());
     }
 
