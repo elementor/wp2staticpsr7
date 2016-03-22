@@ -290,7 +290,7 @@ class UriTest extends \PHPUnit_Framework_TestCase
         //  should not use late static binding to access private static members.
         // If they do, this will fatal.
         $this->assertInstanceOf(
-            \GuzzleHttp\Tests\Psr7\ExtendingClassTest::class,
+            '\GuzzleHttp\Tests\Psr7\ExtendingClassTest',
             new ExtendingClassTest('http://h:9/')
         );
     }
