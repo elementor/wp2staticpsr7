@@ -566,8 +566,13 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
     public function testReturnsAsIsWhenNoChanges()
     {
-        $request = new Psr7\Request('GET', 'http://foo.com');
-        $this->assertSame($request, Psr7\modify_request($request, []));
+        $r1 = new Psr7\Request('GET', 'http://foo.com');
+        $r2 = Psr7\modify_request($r1, []);
+        $this->assertTrue($r2 instanceof Psr7\Request);
+
+        $r1 = new Psr7\ServerRequest('GET', 'http://foo.com');
+        $r2 = Psr7\modify_request($r1, []);
+        $this->assertTrue($r2 instanceof \Psr\Http\Message\ServerRequestInterface);
     }
 
     public function testReturnsUriAsIsWhenNoChanges()
@@ -592,5 +597,16 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $r2 = Psr7\modify_request($r1, ['query' => 'foo=bar']);
         $this->assertNotSame($r1, $r2);
         $this->assertEquals('foo=bar', $r2->getUri()->getQuery());
+    }
+
+    public function testModifyRequestKeepInstanceOfRequest()
+    {
+        $r1 = new Psr7\Request('GET', 'http://foo.com');
+        $r2 = Psr7\modify_request($r1, ['remove_headers' => ['non-existent']]);
+        $this->assertTrue($r2 instanceof Psr7\Request);
+
+        $r1 = new Psr7\ServerRequest('GET', 'http://foo.com');
+        $r2 = Psr7\modify_request($r1, ['remove_headers' => ['non-existent']]);
+        $this->assertTrue($r2 instanceof \Psr\Http\Message\ServerRequestInterface);
     }
 }
