@@ -449,7 +449,7 @@ function parse_request($message)
 {
     $data = _parse_message($message);
     $matches = [];
-    if (!preg_match('/^[a-zA-Z]+\s+([a-zA-Z]+:\/\/|\/).*/', $data['start-line'], $matches)) {
+    if (!preg_match('/^[\S]+\s+([a-zA-Z]+:\/\/|\/).*/', $data['start-line'], $matches)) {
         throw new \InvalidArgumentException('Invalid request string');
     }
     $parts = explode(' ', $data['start-line'], 3);
