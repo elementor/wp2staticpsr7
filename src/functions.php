@@ -76,14 +76,16 @@ function uri_for($uri)
  */
 function stream_for($resource = '', array $options = [])
 {
+    if (is_scalar($resource)) {
+        $stream = fopen('php://temp', 'r+');
+        if ($resource !== '') {
+            fwrite($stream, $resource);
+            fseek($stream, 0);
+        }
+        return new Stream($stream, $options);
+    }
+
     switch (gettype($resource)) {
-        case is_scalar($resource):
-            $stream = fopen('php://temp', 'r+');
-            if ($resource !== '') {
-                fwrite($stream, $resource);
-                fseek($stream, 0);
-            }
-            return new Stream($stream, $options);
         case 'resource':
             return new Stream($resource, $options);
         case 'object':
