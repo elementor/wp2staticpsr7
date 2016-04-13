@@ -68,8 +68,8 @@ function uri_for($uri)
  * - metadata: Array of custom metadata.
  * - size: Size of the stream.
  *
- * @param resource|string|StreamInterface $resource Entity body data
- * @param array                           $options  Additional options
+ * @param resource|int|string|float|bool|StreamInterface $resource Entity body data
+ * @param array                                          $options  Additional options
  *
  * @return Stream
  * @throws \InvalidArgumentException if the $resource arg is not valid.
@@ -77,7 +77,7 @@ function uri_for($uri)
 function stream_for($resource = '', array $options = [])
 {
     switch (gettype($resource)) {
-        case 'string':
+        case is_scalar($resource):
             $stream = fopen('php://temp', 'r+');
             if ($resource !== '') {
                 fwrite($stream, $resource);
