@@ -4,6 +4,7 @@ namespace GuzzleHttp\Psr7;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -234,6 +235,19 @@ function modify_request(RequestInterface $request, array $changes)
 
     if (isset($changes['query'])) {
         $uri = $uri->withQuery($changes['query']);
+    }
+
+    if ($request instanceof ServerRequestInterface) {
+        return new ServerRequest(
+            isset($changes['method']) ? $changes['method'] : $request->getMethod(),
+            $uri,
+            $headers,
+            isset($changes['body']) ? $changes['body'] : $request->getBody(),
+            isset($changes['version'])
+                ? $changes['version']
+                : $request->getProtocolVersion(),
+            $request->getServerParams()
+        );
     }
 
     return new Request(
