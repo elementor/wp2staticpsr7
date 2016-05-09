@@ -128,8 +128,8 @@ class Uri implements UriInterface
         }
 
         // Return the relative uri as-is if it has a scheme.
-        if ($rel->getScheme()) {
-            return $rel->withPath(static::removeDotSegments($rel->getPath()));
+        if ($rel->getScheme() != '') {
+            return $rel->withPath(self::removeDotSegments($rel->getPath()));
         }
 
         $relParts = [
@@ -282,7 +282,7 @@ class Uri implements UriInterface
             $authority = $this->userInfo . '@' . $authority;
         }
 
-        if ($this->isNonStandardPort($this->scheme, $this->host, $this->port)) {
+        if ($this->port !== null) {
             $authority .= ':' . $this->port;
         }
 
@@ -329,7 +329,7 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->scheme = $scheme;
-        $new->port = $new->filterPort($new->scheme, $new->host, $new->port);
+        $new->port = $new->filterPort($new->port);
         return $new;
     }
 
@@ -362,7 +362,7 @@ class Uri implements UriInterface
 
     public function withPort($port)
     {
-        $port = $this->filterPort($this->scheme, $this->host, $port);
+        $port = $this->filterPort($port);
 
         if ($this->port === $port) {
             return $this;
@@ -446,7 +446,7 @@ class Uri implements UriInterface
         $this->userInfo = isset($parts['user']) ? $parts['user'] : '';
         $this->host = isset($parts['host']) ? $parts['host'] : '';
         $this->port = isset($parts['port'])
-            ? $this->filterPort($this->scheme, $this->host, $parts['port'])
+            ? $this->filterPort($parts['port'])
             : null;
         $this->path = isset($parts['path'])
             ? $this->filterPath($parts['path'])
@@ -516,20 +516,12 @@ class Uri implements UriInterface
      * Is a given port non-standard for the current scheme?
      *
      * @param string $scheme
-     * @param string $host
-     * @param int $port
+     * @param int    $port
+     *
      * @return bool
      */
-    private static function isNonStandardPort($scheme, $host, $port)
+    private static function isNonStandardPort($scheme, $port)
     {
-        if (!$scheme && $port) {
-            return true;
-        }
-
-        if (!$host || !$port) {
-            return false;
-        }
-
         return !isset(self::$schemes[$scheme]) || $port !== self::$schemes[$scheme];
     }
 
@@ -547,26 +539,26 @@ class Uri implements UriInterface
     }
 
     /**
-     * @param string $scheme
-     * @param string $host
-     * @param int $port
+     * @param int|null $port
      *
      * @return int|null
      *
      * @throws \InvalidArgumentException If the port is invalid.
      */
-    private function filterPort($scheme, $host, $port)
+    private function filterPort($port)
     {
-        if (null !== $port) {
-            $port = (int) $port;
-            if (1 > $port || 0xffff < $port) {
-                throw new \InvalidArgumentException(
-                    sprintf('Invalid port: %d. Must be between 1 and 65535', $port)
-                );
-            }
+        if ($port === null) {
+            return null;
         }
 
-        return $this->isNonStandardPort($scheme, $host, $port) ? $port : null;
+        $port = (int) $port;
+        if (1 > $port || 0xffff < $port) {
+            throw new \InvalidArgumentException(
+                sprintf('Invalid port: %d. Must be between 1 and 65535', $port)
+            );
+        }
+
+        return self::isNonStandardPort($this->scheme, $port) ? $port : null;
     }
 
     /**
