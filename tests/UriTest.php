@@ -315,10 +315,10 @@ class UriTest extends \PHPUnit_Framework_TestCase
 
     public function testPortCanBeRemoved()
     {
-        $uri = (new Uri('//example.com:8080'))->withPort(null);
+        $uri = (new Uri('http://example.com:8080'))->withPort(null);
 
         $this->assertNull($uri->getPort());
-        $this->assertSame('//example.com', (string) $uri);
+        $this->assertSame('http://example.com', (string) $uri);
     }
 
     public function testAuthorityWithUserInfoButWithoutHost()
