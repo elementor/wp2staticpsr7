@@ -141,7 +141,23 @@ class UriTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \InvalidArgumentException
      */
-    public function testPathMustBeValid()
+    public function testSchemeMustHaveCorrectType()
+    {
+        (new Uri())->withScheme([]);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testHostMustHaveCorrectType()
+    {
+        (new Uri())->withHost([]);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testPathMustHaveCorrectType()
     {
         (new Uri())->withPath([]);
     }
@@ -149,9 +165,17 @@ class UriTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \InvalidArgumentException
      */
-    public function testQueryMustBeValid()
+    public function testQueryMustHaveCorrectType()
     {
-        (new Uri())->withQuery(new \stdClass);
+        (new Uri())->withQuery([]);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testFragmentMustHaveCorrectType()
+    {
+        (new Uri())->withFragment([]);
     }
 
     public function testCanParseFalseyUriParts()
@@ -266,6 +290,32 @@ class UriTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('', $uri->getQuery());
     }
 
+    public function testSchemeIsNormalizedToLowercase()
+    {
+        $uri = new Uri('HTTP://example.com');
+
+        $this->assertSame('http', $uri->getScheme());
+        $this->assertSame('http://example.com', (string) $uri);
+
+        $uri = (new Uri('//example.com'))->withScheme('HTTP');
+
+        $this->assertSame('http', $uri->getScheme());
+        $this->assertSame('http://example.com', (string) $uri);
+    }
+
+    public function testHostIsNormalizedToLowercase()
+    {
+        $uri = new Uri('//eXaMpLe.CoM');
+
+        $this->assertSame('example.com', $uri->getHost());
+        $this->assertSame('//example.com', (string) $uri);
+
+        $uri = (new Uri())->withHost('eXaMpLe.CoM');
+
+        $this->assertSame('example.com', $uri->getHost());
+        $this->assertSame('//example.com', (string) $uri);
+    }
+
     public function testPortIsNullIfStandardPortForScheme()
     {
         // HTTPS standard port
@@ -329,33 +379,64 @@ class UriTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('', $uri->getAuthority());
     }
 
-    public function pathEncodingProvider()
+    public function uriComponentsEncodingProvider()
     {
+        $unreserved = 'a-zA-Z0-9.-_~!$&\'()*+,;=:@';
+
         return [
-            // Percent encode spaces.
-            ['/baz bar', '/baz%20bar'],
-            // Don't encoding something that's already encoded.
-            ['/baz%20bar', '/baz%20bar'],
+            // Percent encode spaces
+            ['/pa th?q=va lue#frag ment', '/pa%20th', 'q=va%20lue', 'frag%20ment', '/pa%20th?q=va%20lue#frag%20ment'],
+            // Percent encode multibyte
+            ['/€?€#€', '/%E2%82%AC', '%E2%82%AC', '%E2%82%AC', '/%E2%82%AC?%E2%82%AC#%E2%82%AC'],
+            // Don't encode something that's already encoded
+            ['/pa%20th?q=va%20lue#frag%20ment', '/pa%20th', 'q=va%20lue', 'frag%20ment', '/pa%20th?q=va%20lue#frag%20ment'],
             // Percent encode invalid percent encodings
-            ['/baz%2-bar', '/baz%252-bar'],
+            ['/pa%2-th?q=va%2-lue#frag%2-ment', '/pa%252-th', 'q=va%252-lue', 'frag%252-ment', '/pa%252-th?q=va%252-lue#frag%252-ment'],
             // Don't encode path segments
-            ['/baz/bar/bam', '/baz/bar/bam'],
-            ['/baz+bar', '/baz+bar'],
-            ['/baz:bar', '/baz:bar'],
-            ['/baz@bar', '/baz@bar'],
-            ['/baz(bar);bam/', '/baz(bar);bam/'],
-            ['/a-zA-Z0-9.-_~!$&\'()*+,;=:@', '/a-zA-Z0-9.-_~!$&\'()*+,;=:@'],
+            ['/pa/th//two?q=va/lue#frag/ment', '/pa/th//two', 'q=va/lue', 'frag/ment', '/pa/th//two?q=va/lue#frag/ment'],
+            // Don't encode unreserved chars or sub-delimiters
+            ["/$unreserved?$unreserved#$unreserved", "/$unreserved", $unreserved, $unreserved, "/$unreserved?$unreserved#$unreserved"],
+            // Encoded unreserved chars are not decoded
+            ['/p%61th?q=v%61lue#fr%61gment', '/p%61th', 'q=v%61lue', 'fr%61gment', '/p%61th?q=v%61lue#fr%61gment'],
         ];
     }
 
     /**
-     * @dataProvider pathEncodingProvider
+     * @dataProvider uriComponentsEncodingProvider
      */
-    public function testUriEncodesPathProperly($input, $output)
+    public function testUriComponentsGetEncodedProperly($input, $path, $query, $fragment, $output)
     {
         $uri = new Uri($input);
-        $this->assertSame($output, $uri->getPath());
+        $this->assertSame($path, $uri->getPath());
+        $this->assertSame($query, $uri->getQuery());
+        $this->assertSame($fragment, $uri->getFragment());
         $this->assertSame($output, (string) $uri);
+    }
+
+    public function testWithPathEncodesProperly()
+    {
+        $uri = (new Uri())->withPath('/baz?#€bar');
+        // query and fragment delimiters and multibyte chars are encoded
+        $this->assertSame('/baz%3F%23%E2%82%ACbar', $uri->getPath());
+        $this->assertSame('/baz%3F%23%E2%82%ACbar', (string) $uri);
+    }
+
+    public function testWithQueryEncodesProperly()
+    {
+        $uri = (new Uri())->withQuery('?=#&€');
+        // A query starting with a "?" is valid and must not be magically removed. Otherwise it would be impossible to
+        // construct such an URI. Also the "?" does not need to be encoded in the query.
+        $this->assertSame('?=%23&%E2%82%AC', $uri->getQuery());
+        $this->assertSame('??=%23&%E2%82%AC', (string) $uri);
+    }
+
+    public function testWithFragmentEncodesProperly()
+    {
+        $uri = (new Uri())->withFragment('#€');
+        // A fragment starting with a "#" is valid and must not be magically removed. Otherwise it would be impossible to
+        // construct such an URI.
+        $this->assertSame('%23%E2%82%AC', $uri->getFragment());
+        $this->assertSame('#%23%E2%82%AC', (string) $uri);
     }
 
     public function testAllowsForRelativeUri()
