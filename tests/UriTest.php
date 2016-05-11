@@ -415,28 +415,28 @@ class UriTest extends \PHPUnit_Framework_TestCase
 
     public function testWithPathEncodesProperly()
     {
-        $uri = (new Uri())->withPath('/baz?#€bar');
-        // query and fragment delimiters and multibyte chars are encoded
-        $this->assertSame('/baz%3F%23%E2%82%ACbar', $uri->getPath());
-        $this->assertSame('/baz%3F%23%E2%82%ACbar', (string) $uri);
+        $uri = (new Uri())->withPath('/baz?#€/b%61r');
+        // Query and fragment delimiters and multibyte chars are encoded.
+        $this->assertSame('/baz%3F%23%E2%82%AC/b%61r', $uri->getPath());
+        $this->assertSame('/baz%3F%23%E2%82%AC/b%61r', (string) $uri);
     }
 
     public function testWithQueryEncodesProperly()
     {
-        $uri = (new Uri())->withQuery('?=#&€');
+        $uri = (new Uri())->withQuery('?=#&€=/&b%61r');
         // A query starting with a "?" is valid and must not be magically removed. Otherwise it would be impossible to
-        // construct such an URI. Also the "?" does not need to be encoded in the query.
-        $this->assertSame('?=%23&%E2%82%AC', $uri->getQuery());
-        $this->assertSame('??=%23&%E2%82%AC', (string) $uri);
+        // construct such an URI. Also the "?" and "/" does not need to be encoded in the query.
+        $this->assertSame('?=%23&%E2%82%AC=/&b%61r', $uri->getQuery());
+        $this->assertSame('??=%23&%E2%82%AC=/&b%61r', (string) $uri);
     }
 
     public function testWithFragmentEncodesProperly()
     {
-        $uri = (new Uri())->withFragment('#€');
+        $uri = (new Uri())->withFragment('#€?/b%61r');
         // A fragment starting with a "#" is valid and must not be magically removed. Otherwise it would be impossible to
-        // construct such an URI.
-        $this->assertSame('%23%E2%82%AC', $uri->getFragment());
-        $this->assertSame('#%23%E2%82%AC', (string) $uri);
+        // construct such an URI. Also the "?" and "/" does not need to be encoded in the fragment.
+        $this->assertSame('%23%E2%82%AC?/b%61r', $uri->getFragment());
+        $this->assertSame('#%23%E2%82%AC?/b%61r', (string) $uri);
     }
 
     public function testAllowsForRelativeUri()
