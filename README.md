@@ -572,12 +572,3 @@ Note: this function will convert "=" to "%3D" and "&" to "%26".
 `public static function fromParts(array $parts) -> UriInterface`
 
 Create a `GuzzleHttp\Psr7\Uri` object from a hash of `parse_url` parts.
-
-
-# Not Implemented
-
-A few aspects of PSR-7 are not implemented in this project. A pull request for
-any of these features is welcome:
-
-- `Psr\Http\Message\ServerRequestInterface`
-- `Psr\Http\Message\UploadedFileInterface`
