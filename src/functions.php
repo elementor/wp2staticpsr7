@@ -446,7 +446,7 @@ function readline(StreamInterface $stream, $maxLength = null)
         }
         $buffer .= $byte;
         // Break when a new line is found or the max length - 1 is reached
-        if ($byte == PHP_EOL || ++$size == $maxLength - 1) {
+        if ($byte === "\n" || ++$size === $maxLength - 1) {
             break;
         }
     }

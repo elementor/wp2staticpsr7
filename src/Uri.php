@@ -46,7 +46,7 @@ class Uri implements UriInterface
      */
     public function __construct($uri = '')
     {
-        if ($uri != null) {
+        if ($uri != '') {
             $parts = parse_url($uri);
             if ($parts === false) {
                 throw new \InvalidArgumentException("Unable to parse URI: $uri");
@@ -119,7 +119,7 @@ class Uri implements UriInterface
      */
     public static function resolve(UriInterface $base, $rel)
     {
-        if ($rel === null || $rel === '') {
+        if ($rel == '') {
             return $base;
         }
 
@@ -128,8 +128,8 @@ class Uri implements UriInterface
         }
 
         // Return the relative uri as-is if it has a scheme.
-        if ($rel->getScheme()) {
-            return $rel->withPath(static::removeDotSegments($rel->getPath()));
+        if ($rel->getScheme() != '') {
+            return $rel->withPath(self::removeDotSegments($rel->getPath()));
         }
 
         $relParts = [
@@ -148,18 +148,18 @@ class Uri implements UriInterface
             'fragment'  => $base->getFragment()
         ];
 
-        if (!empty($relParts['authority'])) {
+        if ($relParts['authority'] != '') {
             $parts['authority'] = $relParts['authority'];
             $parts['path'] = self::removeDotSegments($relParts['path']);
             $parts['query'] = $relParts['query'];
             $parts['fragment'] = $relParts['fragment'];
-        } elseif (!empty($relParts['path'])) {
+        } elseif ($relParts['path'] != '') {
             if (substr($relParts['path'], 0, 1) == '/') {
                 $parts['path'] = self::removeDotSegments($relParts['path']);
                 $parts['query'] = $relParts['query'];
                 $parts['fragment'] = $relParts['fragment'];
             } else {
-                if (!empty($parts['authority']) && empty($parts['path'])) {
+                if ($parts['authority'] != '' && $parts['path'] == '') {
                     $mergedPath = '/';
                 } else {
                     $mergedPath = substr($parts['path'], 0, strrpos($parts['path'], '/') + 1);
@@ -168,9 +168,9 @@ class Uri implements UriInterface
                 $parts['query'] = $relParts['query'];
                 $parts['fragment'] = $relParts['fragment'];
             }
-        } elseif (!empty($relParts['query'])) {
+        } elseif ($relParts['query'] != '') {
             $parts['query'] = $relParts['query'];
-        } elseif ($relParts['fragment'] != null) {
+        } elseif ($relParts['fragment'] != '') {
             $parts['fragment'] = $relParts['fragment'];
         }
 
@@ -199,7 +199,7 @@ class Uri implements UriInterface
     public static function withoutQueryValue(UriInterface $uri, $key)
     {
         $current = $uri->getQuery();
-        if (!$current) {
+        if ($current == '') {
             return $uri;
         }
 
@@ -232,7 +232,7 @@ class Uri implements UriInterface
         $current = $uri->getQuery();
         $key = strtr($key, self::$replaceQuery);
 
-        if (!$current) {
+        if ($current == '') {
             $result = [];
         } else {
             $result = [];
@@ -273,16 +273,16 @@ class Uri implements UriInterface
 
     public function getAuthority()
     {
-        if (empty($this->host)) {
+        if ($this->host == '') {
             return '';
         }
 
         $authority = $this->host;
-        if (!empty($this->userInfo)) {
+        if ($this->userInfo != '') {
             $authority = $this->userInfo . '@' . $authority;
         }
 
-        if ($this->isNonStandardPort($this->scheme, $this->host, $this->port)) {
+        if ($this->port !== null) {
             $authority .= ':' . $this->port;
         }
 
@@ -306,7 +306,7 @@ class Uri implements UriInterface
 
     public function getPath()
     {
-        return $this->path == null ? '' : $this->path;
+        return $this->path;
     }
 
     public function getQuery()
@@ -329,14 +329,14 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->scheme = $scheme;
-        $new->port = $new->filterPort($new->scheme, $new->host, $new->port);
+        $new->port = $new->filterPort($new->port);
         return $new;
     }
 
     public function withUserInfo($user, $password = null)
     {
         $info = $user;
-        if ($password) {
+        if ($password != '') {
             $info .= ':' . $password;
         }
 
@@ -362,7 +362,7 @@ class Uri implements UriInterface
 
     public function withPort($port)
     {
-        $port = $this->filterPort($this->scheme, $this->host, $port);
+        $port = $this->filterPort($port);
 
         if ($this->port === $port) {
             return $this;
@@ -436,7 +436,7 @@ class Uri implements UriInterface
     /**
      * Apply parse_url parts to a URI.
      *
-     * @param $parts Array of parse_url parts to apply.
+     * @param array $parts Array of parse_url parts to apply.
      */
     private function applyParts(array $parts)
     {
@@ -445,8 +445,8 @@ class Uri implements UriInterface
             : '';
         $this->userInfo = isset($parts['user']) ? $parts['user'] : '';
         $this->host = isset($parts['host']) ? $parts['host'] : '';
-        $this->port = !empty($parts['port'])
-            ? $this->filterPort($this->scheme, $this->host, $parts['port'])
+        $this->port = isset($parts['port'])
+            ? $this->filterPort($parts['port'])
             : null;
         $this->path = isset($parts['path'])
             ? $this->filterPath($parts['path'])
@@ -476,34 +476,36 @@ class Uri implements UriInterface
     {
         $uri = '';
 
-        if (!empty($scheme)) {
+        if ($scheme != '') {
             $uri .= $scheme . ':';
         }
 
-        $hierPart = '';
-
-        if (!empty($authority)) {
-            if (!empty($scheme)) {
-                $hierPart .= '//';
-            }
-            $hierPart .= $authority;
+        if ($authority != '') {
+            $uri .= '//' . $authority;
         }
 
-        if ($path != null) {
-            // Add a leading slash if necessary.
-            if ($hierPart && substr($path, 0, 1) !== '/') {
-                $hierPart .= '/';
+        if ($path != '') {
+            if ($path[0] !== '/') {
+                if ($authority != '') {
+                    // If the path is rootless and an authority is present, the path MUST be prefixed by "/"
+                    $path = '/' . $path;
+                }
+            } elseif (isset($path[1]) && $path[1] === '/') {
+                if ($authority == '') {
+                    // If the path is starting with more than one "/" and no authority is present, the
+                    // starting slashes MUST be reduced to one.
+                    $path = '/' . ltrim($path, '/');
+                }
             }
-            $hierPart .= $path;
+
+            $uri .= $path;
         }
 
-        $uri .= $hierPart;
-
-        if ($query != null) {
+        if ($query != '') {
             $uri .= '?' . $query;
         }
 
-        if ($fragment != null) {
+        if ($fragment != '') {
             $uri .= '#' . $fragment;
         }
 
@@ -514,20 +516,12 @@ class Uri implements UriInterface
      * Is a given port non-standard for the current scheme?
      *
      * @param string $scheme
-     * @param string $host
-     * @param int $port
+     * @param int    $port
+     *
      * @return bool
      */
-    private static function isNonStandardPort($scheme, $host, $port)
+    private static function isNonStandardPort($scheme, $port)
     {
-        if (!$scheme && $port) {
-            return true;
-        }
-
-        if (!$host || !$port) {
-            return false;
-        }
-
         return !isset(self::$schemes[$scheme]) || $port !== self::$schemes[$scheme];
     }
 
@@ -545,32 +539,32 @@ class Uri implements UriInterface
     }
 
     /**
-     * @param string $scheme
-     * @param string $host
-     * @param int $port
+     * @param int|null $port
      *
      * @return int|null
      *
      * @throws \InvalidArgumentException If the port is invalid.
      */
-    private function filterPort($scheme, $host, $port)
+    private function filterPort($port)
     {
-        if (null !== $port) {
-            $port = (int) $port;
-            if (1 > $port || 0xffff < $port) {
-                throw new \InvalidArgumentException(
-                    sprintf('Invalid port: %d. Must be between 1 and 65535', $port)
-                );
-            }
+        if ($port === null) {
+            return null;
         }
 
-        return $this->isNonStandardPort($scheme, $host, $port) ? $port : null;
+        $port = (int) $port;
+        if (1 > $port || 0xffff < $port) {
+            throw new \InvalidArgumentException(
+                sprintf('Invalid port: %d. Must be between 1 and 65535', $port)
+            );
+        }
+
+        return self::isNonStandardPort($this->scheme, $port) ? $port : null;
     }
 
     /**
      * Filters the path of a URI
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -586,7 +580,7 @@ class Uri implements UriInterface
     /**
      * Filters the query string or fragment of a URI.
      *
-     * @param $str
+     * @param string $str
      *
      * @return string
      */
