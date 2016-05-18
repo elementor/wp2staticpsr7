@@ -69,8 +69,8 @@ function uri_for($uri)
  * - metadata: Array of custom metadata.
  * - size: Size of the stream.
  *
- * @param resource|int|string|float|bool|StreamInterface $resource Entity body data
- * @param array                                          $options  Additional options
+ * @param resource|string|null|int|float|bool|StreamInterface|callable $resource Entity body data
+ * @param array                                                        $options  Additional options
  *
  * @return Stream
  * @throws \InvalidArgumentException if the $resource arg is not valid.
