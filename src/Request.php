@@ -25,13 +25,11 @@ class Request implements RequestInterface
     private $uri;
 
     /**
-     * @param null|string $method HTTP method for the request.
-     * @param null|string|UriInterface $uri URI for the request.
+     * @param string $method HTTP method for the request.
+     * @param string|UriInterface $uri URI for the request.
      * @param array $headers Headers for the message.
      * @param string|resource|StreamInterface $body Message body.
      * @param string $protocolVersion HTTP protocol version.
-     *
-     * @throws InvalidArgumentException for an invalid URI
      */
     public function __construct(
         $method,
@@ -40,12 +38,8 @@ class Request implements RequestInterface
         $body = null,
         $protocolVersion = '1.1'
     ) {
-        if (is_string($uri)) {
+        if (!($uri instanceof UriInterface)) {
             $uri = new Uri($uri);
-        } elseif (!($uri instanceof UriInterface)) {
-            throw new \InvalidArgumentException(
-                'URI must be a string or Psr\Http\Message\UriInterface'
-            );
         }
 
         $this->method = strtoupper($method);
