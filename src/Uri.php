@@ -4,10 +4,11 @@ namespace GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
 
 /**
- * Basic PSR-7 URI implementation.
+ * PSR-7 URI implementation.
  *
- * @link https://github.com/phly/http This class is based upon
- *     Matthew Weier O'Phinney's URI implementation in phly/http.
+ * @author Michael Dowling
+ * @author Tobias Schultze
+ * @author Matthew Weier O'Phinney
  */
 class Uri implements UriInterface
 {
@@ -86,7 +87,7 @@ class Uri implements UriInterface
         $results = [];
         $segments = explode('/', $path);
         foreach ($segments as $segment) {
-            if ($segment == '..') {
+            if ($segment === '..') {
                 array_pop($results);
             } elseif (!isset($ignoreSegments[$segment])) {
                 $results[] = $segment;
@@ -102,7 +103,7 @@ class Uri implements UriInterface
         }
 
         // Add the trailing slash if necessary
-        if ($newPath != '/' && isset($ignoreSegments[end($segments)])) {
+        if ($newPath !== '/' && isset($ignoreSegments[end($segments)])) {
             $newPath .= '/';
         }
 
@@ -112,8 +113,8 @@ class Uri implements UriInterface
     /**
      * Resolve a base URI with a relative URI and return a new URI.
      *
-     * @param UriInterface $base Base URI
-     * @param string       $rel  Relative URI
+     * @param UriInterface        $base Base URI
+     * @param string|UriInterface $rel  Relative URI
      *
      * @return UriInterface
      */
@@ -351,6 +352,8 @@ class Uri implements UriInterface
 
     public function withHost($host)
     {
+        $host = $this->filterHost($host);
+
         if ($this->host === $host) {
             return $this;
         }
@@ -375,12 +378,6 @@ class Uri implements UriInterface
 
     public function withPath($path)
     {
-        if (!is_string($path)) {
-            throw new \InvalidArgumentException(
-                'Invalid path provided; must be a string'
-            );
-        }
-
         $path = $this->filterPath($path);
 
         if ($this->path === $path) {
@@ -394,17 +391,6 @@ class Uri implements UriInterface
 
     public function withQuery($query)
     {
-        if (!is_string($query) && !method_exists($query, '__toString')) {
-            throw new \InvalidArgumentException(
-                'Query string must be a string'
-            );
-        }
-
-        $query = (string) $query;
-        if (substr($query, 0, 1) === '?') {
-            $query = substr($query, 1);
-        }
-
         $query = $this->filterQueryAndFragment($query);
 
         if ($this->query === $query) {
@@ -418,10 +404,6 @@ class Uri implements UriInterface
 
     public function withFragment($fragment)
     {
-        if (substr($fragment, 0, 1) === '#') {
-            $fragment = substr($fragment, 1);
-        }
-
         $fragment = $this->filterQueryAndFragment($fragment);
 
         if ($this->fragment === $fragment) {
@@ -444,7 +426,9 @@ class Uri implements UriInterface
             ? $this->filterScheme($parts['scheme'])
             : '';
         $this->userInfo = isset($parts['user']) ? $parts['user'] : '';
-        $this->host = isset($parts['host']) ? $parts['host'] : '';
+        $this->host = isset($parts['host'])
+            ? $this->filterHost($parts['host'])
+            : '';
         $this->port = isset($parts['port'])
             ? $this->filterPort($parts['port'])
             : null;
@@ -529,13 +513,32 @@ class Uri implements UriInterface
      * @param string $scheme
      *
      * @return string
+     *
+     * @throws \InvalidArgumentException If the scheme is invalid.
      */
     private function filterScheme($scheme)
     {
-        $scheme = strtolower($scheme);
-        $scheme = rtrim($scheme, ':/');
+        if (!is_string($scheme)) {
+            throw new \InvalidArgumentException('Scheme must be a string');
+        }
 
-        return $scheme;
+        return strtolower($scheme);
+    }
+
+    /**
+     * @param string $host
+     *
+     * @return string
+     *
+     * @throws \InvalidArgumentException If the host is invalid.
+     */
+    private function filterHost($host)
+    {
+        if (!is_string($host)) {
+            throw new \InvalidArgumentException('Host must be a string');
+        }
+
+        return strtolower($host);
     }
 
     /**
@@ -567,11 +570,17 @@ class Uri implements UriInterface
      * @param string $path
      *
      * @return string
+     *
+     * @throws \InvalidArgumentException If the path is invalid.
      */
     private function filterPath($path)
     {
+        if (!is_string($path)) {
+            throw new \InvalidArgumentException('Path must be a string');
+        }
+
         return preg_replace_callback(
-            '/(?:[^' . self::$charUnreserved . self::$charSubDelims . ':@\/%]+|%(?![A-Fa-f0-9]{2}))/',
+            '/(?:[^' . self::$charUnreserved . self::$charSubDelims . '%:@\/]++|%(?![A-Fa-f0-9]{2}))/',
             [$this, 'rawurlencodeMatchZero'],
             $path
         );
@@ -583,11 +592,17 @@ class Uri implements UriInterface
      * @param string $str
      *
      * @return string
+     *
+     * @throws \InvalidArgumentException If the query or fragment is invalid.
      */
     private function filterQueryAndFragment($str)
     {
+        if (!is_string($str)) {
+            throw new \InvalidArgumentException('Query and fragment must be a string');
+        }
+
         return preg_replace_callback(
-            '/(?:[^' . self::$charUnreserved . self::$charSubDelims . '%:@\/\?]+|%(?![A-Fa-f0-9]{2}))/',
+            '/(?:[^' . self::$charUnreserved . self::$charSubDelims . '%:@\/\?]++|%(?![A-Fa-f0-9]{2}))/',
             [$this, 'rawurlencodeMatchZero'],
             $str
         );
