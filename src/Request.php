@@ -25,13 +25,11 @@ class Request implements RequestInterface
     private $uri;
 
     /**
-     * @param null|string $method HTTP method for the request.
-     * @param null|string|UriInterface $uri URI for the request.
+     * @param string $method HTTP method for the request.
+     * @param string|UriInterface $uri URI for the request.
      * @param array $headers Headers for the message.
-     * @param string|resource|StreamInterface $body Message body.
+     * @param string|null|resource|StreamInterface $body Message body.
      * @param string $protocolVersion HTTP protocol version.
-     *
-     * @throws InvalidArgumentException for an invalid URI
      */
     public function __construct(
         $method,
@@ -40,12 +38,8 @@ class Request implements RequestInterface
         $body = null,
         $protocolVersion = '1.1'
     ) {
-        if (is_string($uri)) {
+        if (!($uri instanceof UriInterface)) {
             $uri = new Uri($uri);
-        } elseif (!($uri instanceof UriInterface)) {
-            throw new \InvalidArgumentException(
-                'URI must be a string or Psr\Http\Message\UriInterface'
-            );
         }
 
         $this->method = strtoupper($method);
@@ -53,12 +47,11 @@ class Request implements RequestInterface
         $this->setHeaders($headers);
         $this->protocol = $protocolVersion;
 
-        $host = $uri->getHost();
-        if ($host && !$this->hasHeader('Host')) {
-            $this->updateHostFromUri($host);
+        if (!$this->hasHeader('Host')) {
+            $this->updateHostFromUri();
         }
 
-        if ($body) {
+        if ($body != '') {
             $this->stream = stream_for($body);
         }
     }
@@ -70,10 +63,10 @@ class Request implements RequestInterface
         }
 
         $target = $this->uri->getPath();
-        if ($target == null) {
+        if ($target == '') {
             $target = '/';
         }
-        if ($this->uri->getQuery()) {
+        if ($this->uri->getQuery() != '') {
             $target .= '?' . $this->uri->getQuery();
         }
 
@@ -120,9 +113,7 @@ class Request implements RequestInterface
         $new->uri = $uri;
 
         if (!$preserveHost) {
-            if ($host = $uri->getHost()) {
-                $new->updateHostFromUri($host);
-            }
+            $new->updateHostFromUri();
         }
 
         return $new;
@@ -135,14 +126,20 @@ class Request implements RequestInterface
         return $newInstance;
     }
 
-    private function updateHostFromUri($host)
+    private function updateHostFromUri()
     {
-        // Ensure Host is the first header.
-        // See: http://tools.ietf.org/html/rfc7230#section-5.4
-        if ($port = $this->uri->getPort()) {
+        $host = $this->uri->getHost();
+
+        if ($host == '') {
+            return;
+        }
+
+        if (($port = $this->uri->getPort()) !== null) {
             $host .= ':' . $port;
         }
 
+        // Ensure Host is the first header.
+        // See: http://tools.ietf.org/html/rfc7230#section-5.4
         $this->headerLines = ['Host' => [$host]] + $this->headerLines;
         $this->headers = ['host' => [$host]] + $this->headers;
     }
