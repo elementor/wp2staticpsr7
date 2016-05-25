@@ -221,4 +221,17 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $r = new Response();
         $this->assertSame($r, $r->withoutHeader('foo'));
     }
+
+    public function testHeaderValuesAreTrimmed()
+    {
+        $r1 = new Response(200, ['OWS' => " \t \tFoo\t \t "]);
+        $r2 = (new Response())->withHeader('OWS', " \t \tFoo\t \t ");
+        $r3 = (new Response())->withAddedHeader('OWS', " \t \tFoo\t \t ");;
+
+        foreach ([$r1, $r2, $r3] as $r) {
+            $this->assertSame(['OWS' => ['Foo']], $r->getHeaders());
+            $this->assertSame('Foo', $r->getHeaderLine('OWS'));
+            $this->assertSame(['Foo'], $r->getHeader('OWS'));
+        }
+    }
 }
