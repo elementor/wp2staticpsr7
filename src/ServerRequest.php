@@ -336,8 +336,8 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function withoutAttribute($attribute)
     {
-        if (false === isset($this->attributes[$attribute])) {
-            return clone $this;
+        if (false === array_key_exists($attribute, $this->attributes)) {
+            return $this;
         }
 
         $new = clone $this;
