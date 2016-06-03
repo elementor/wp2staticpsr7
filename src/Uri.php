@@ -43,7 +43,7 @@ class Uri implements UriInterface
     private $fragment = '';
 
     /**
-     * @param string $uri URI to parse and wrap.
+     * @param string $uri URI to parse
      */
     public function __construct($uri = '')
     {

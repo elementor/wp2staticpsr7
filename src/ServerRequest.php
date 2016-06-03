@@ -55,26 +55,24 @@ class ServerRequest extends Request implements ServerRequestInterface
     private $uploadedFiles = [];
 
     /**
-     * @param null|string $method HTTP method for the request
-     * @param null|string|UriInterface $uri URI for the request
-     * @param array $headers Headers for the message
-     * @param string|resource|StreamInterface $body Message body
-     * @param string $protocolVersion HTTP protocol version
-     * @param array $serverParams the value of $_SERVER superglobal
-     *
-     * @throws InvalidArgumentException for an invalid URI
+     * @param string                               $method       HTTP method
+     * @param string|UriInterface                  $uri          URI
+     * @param array                                $headers      Request headers
+     * @param string|null|resource|StreamInterface $body         Request body
+     * @param string                               $version      Protocol version
+     * @param array                                $serverParams Typically the $_SERVER superglobal
      */
     public function __construct(
         $method,
         $uri,
         array $headers = [],
         $body = null,
-        $protocolVersion = '1.1',
+        $version = '1.1',
         array $serverParams = []
     ) {
         $this->serverParams = $serverParams;
 
-        parent::__construct($method, $uri, $headers, $body, $protocolVersion);
+        parent::__construct($method, $uri, $headers, $body, $version);
     }
 
     /**
