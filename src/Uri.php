@@ -61,7 +61,7 @@ class Uri implements UriInterface
         return self::createUriString(
             $this->scheme,
             $this->getAuthority(),
-            $this->getPath(),
+            $this->path,
             $this->query,
             $this->fragment
         );
@@ -117,70 +117,58 @@ class Uri implements UriInterface
      * @param string|UriInterface $rel  Relative URI
      *
      * @return UriInterface
+     * @link http://tools.ietf.org/html/rfc3986#section-5.2
      */
     public static function resolve(UriInterface $base, $rel)
     {
-        if ($rel == '') {
-            return $base;
-        }
-
         if (!($rel instanceof UriInterface)) {
             $rel = new self($rel);
         }
 
-        // Return the relative uri as-is if it has a scheme.
+        if ((string) $rel === '') {
+            // we can simply return the same base URI instance for this same-document reference
+            return $base;
+        }
+
         if ($rel->getScheme() != '') {
             return $rel->withPath(self::removeDotSegments($rel->getPath()));
         }
 
-        $relParts = [
-            'scheme'    => $rel->getScheme(),
-            'authority' => $rel->getAuthority(),
-            'path'      => $rel->getPath(),
-            'query'     => $rel->getQuery(),
-            'fragment'  => $rel->getFragment()
-        ];
-
-        $parts = [
-            'scheme'    => $base->getScheme(),
-            'authority' => $base->getAuthority(),
-            'path'      => $base->getPath(),
-            'query'     => $base->getQuery(),
-            'fragment'  => $base->getFragment()
-        ];
-
-        if ($relParts['authority'] != '') {
-            $parts['authority'] = $relParts['authority'];
-            $parts['path'] = self::removeDotSegments($relParts['path']);
-            $parts['query'] = $relParts['query'];
-            $parts['fragment'] = $relParts['fragment'];
-        } elseif ($relParts['path'] != '') {
-            if (substr($relParts['path'], 0, 1) == '/') {
-                $parts['path'] = self::removeDotSegments($relParts['path']);
-                $parts['query'] = $relParts['query'];
-                $parts['fragment'] = $relParts['fragment'];
+        if ($rel->getAuthority() != '') {
+            $targetAuthority = $rel->getAuthority();
+            $targetPath = self::removeDotSegments($rel->getPath());
+            $targetQuery = $rel->getQuery();
+        } else {
+            $targetAuthority = $base->getAuthority();
+            if ($rel->getPath() === '') {
+                $targetPath = $base->getPath();
+                $targetQuery = $rel->getQuery() != '' ? $rel->getQuery() : $base->getQuery();
             } else {
-                if ($parts['authority'] != '' && $parts['path'] == '') {
-                    $mergedPath = '/';
+                if ($rel->getPath()[0] === '/') {
+                    $targetPath = $rel->getPath();
                 } else {
-                    $mergedPath = substr($parts['path'], 0, strrpos($parts['path'], '/') + 1);
+                    if ($targetAuthority != '' && $base->getPath() === '') {
+                        $targetPath = '/' . $rel->getPath();
+                    } else {
+                        $lastSlashPos = strrpos($base->getPath(), '/');
+                        if ($lastSlashPos === false) {
+                            $targetPath = $rel->getPath();
+                        } else {
+                            $targetPath = substr($base->getPath(), 0, $lastSlashPos + 1) . $rel->getPath();
+                        }
+                    }
                 }
-                $parts['path'] = self::removeDotSegments($mergedPath . $relParts['path']);
-                $parts['query'] = $relParts['query'];
-                $parts['fragment'] = $relParts['fragment'];
+                $targetPath = self::removeDotSegments($targetPath);
+                $targetQuery = $rel->getQuery();
             }
-        } elseif ($relParts['query'] != '') {
-            $parts['query'] = $relParts['query'];
-        } elseif ($relParts['fragment'] != '') {
-            $parts['fragment'] = $relParts['fragment'];
         }
 
         return new self(self::createUriString(
-            $parts['scheme'],
-            $parts['authority'],
-            $parts['path'],
-            $parts['query'],
-            $parts['fragment']
+            $base->getScheme(),
+            $targetAuthority,
+            $targetPath,
+            $targetQuery,
+            $rel->getFragment()
         ));
     }
 

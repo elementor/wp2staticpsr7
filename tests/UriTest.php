@@ -71,6 +71,7 @@ class UriTest extends \PHPUnit_Framework_TestCase
     {
         return [
             ['urn:path-rootless'],
+            ['urn:path:with:colon'],
             ['urn:/path-absolute'],
             ['urn:/'],
             // only scheme with empty path
@@ -90,6 +91,8 @@ class UriTest extends \PHPUnit_Framework_TestCase
             ['?q=abc&foo=bar'],
             // only fragment
             ['#fragment'],
+            // dot segments are not removed automatically
+            ['./foo/../bar'],
         ];
     }
 
@@ -106,8 +109,11 @@ class UriTest extends \PHPUnit_Framework_TestCase
     public function getInvalidUris()
     {
         return [
-            ['///'],
-            ['urn://example:animal:ferret:nose'],
+            // parse_url() requires the host component which makes sense for http(s)
+            // but not when the scheme is not known or different. So '//' or '///' is
+            // currently invalid as well but should not according to RFC 3986.
+            ['http://'],
+            ['urn://host:with:colon'], // host cannot contain ":"
         ];
     }
 
@@ -263,9 +269,18 @@ class UriTest extends \PHPUnit_Framework_TestCase
             [self::RFC3986_BASE, 'g/../h',        'http://a/b/c/h'],
             [self::RFC3986_BASE, 'g;x=1/./y',     'http://a/b/c/g;x=1/y'],
             [self::RFC3986_BASE, 'g;x=1/../y',    'http://a/b/c/y'],
+            // dot-segments in the query or fragment
+            [self::RFC3986_BASE, 'g?y/./x',       'http://a/b/c/g?y/./x'],
+            [self::RFC3986_BASE, 'g?y/../x',      'http://a/b/c/g?y/../x'],
+            [self::RFC3986_BASE, 'g#s/./x',       'http://a/b/c/g#s/./x'],
+            [self::RFC3986_BASE, 'g#s/../x',      'http://a/b/c/g#s/../x'],
+            [self::RFC3986_BASE, 'g#s/../x',      'http://a/b/c/g#s/../x'],
+            [self::RFC3986_BASE, '?y#s',          'http://a/b/c/d;p?y#s'],
+            ['http://a/b/c/d;p?q#s', '?y',        'http://a/b/c/d;p?y'],
             ['http://u@a/b/c/d;p?q', '.',         'http://u@a/b/c/'],
             ['http://u:p@a/b/c/d;p?q', '.',       'http://u:p@a/b/c/'],
             ['http://a/b/c/d/', 'e',              'http://a/b/c/d/e'],
+            ['urn:no-slash', 'e',                 'urn:e'],
             // falsey relative parts
             [self::RFC3986_BASE, '//0',           'http://0'],
             [self::RFC3986_BASE, '0',             'http://a/b/c/0'],
