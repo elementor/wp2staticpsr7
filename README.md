@@ -105,7 +105,7 @@ echo $stream; // 0123456789
 
 Compose stream implementations based on a hash of functions.
 
-Allows for easy testing and extension of a provided stream without needing 
+Allows for easy testing and extension of a provided stream without needing
 to create a concrete class for a simple extension point.
 
 ```php
@@ -526,7 +526,7 @@ The `GuzzleHttp\Psr7\Uri` class has several static methods to manipulate URIs.
 
 ## `GuzzleHttp\Psr7\Uri::removeDotSegments`
 
-`public static function removeDotSegments($path) -> UriInterface`
+`public static function removeDotSegments(string $path): string`
 
 Removes dot segments from a path and returns the new path.
 
@@ -535,7 +535,7 @@ See http://tools.ietf.org/html/rfc3986#section-5.2.4
 
 ## `GuzzleHttp\Psr7\Uri::resolve`
 
-`public static function resolve(UriInterface $base, $rel) -> UriInterface`
+`public static function resolve(UriInterface $base, $rel): UriInterface`
 
 Resolve a base URI with a relative URI and return a new URI.
 
@@ -544,7 +544,7 @@ See http://tools.ietf.org/html/rfc3986#section-5
 
 ## `GuzzleHttp\Psr7\Uri::withQueryValue`
 
-`public static function withQueryValue(UriInterface $uri, $key, $value) -> UriInterface`
+`public static function withQueryValue(UriInterface $uri, $key, $value): UriInterface`
 
 Create a new URI with a specific query string value.
 
@@ -556,7 +556,7 @@ Note: this function will convert "=" to "%3D" and "&" to "%26".
 
 ## `GuzzleHttp\Psr7\Uri::withoutQueryValue`
 
-`public static function withoutQueryValue(UriInterface $uri, $key, $value) -> UriInterface`
+`public static function withoutQueryValue(UriInterface $uri, $key): UriInterface`
 
 Create a new URI with a specific query string value removed.
 
@@ -568,6 +568,6 @@ Note: this function will convert "=" to "%3D" and "&" to "%26".
 
 ## `GuzzleHttp\Psr7\Uri::fromParts`
 
-`public static function fromParts(array $parts) -> UriInterface`
+`public static function fromParts(array $parts): UriInterface`
 
 Create a `GuzzleHttp\Psr7\Uri` object from a hash of `parse_url` parts.

@@ -301,8 +301,31 @@ class UriTest extends \PHPUnit_Framework_TestCase
         $uri = Uri::withoutQueryValue($uri, 'e');
         $this->assertSame('a=b', $uri->getQuery());
         $uri = Uri::withoutQueryValue($uri, 'a');
-        $uri = Uri::withoutQueryValue($uri, 'a');
         $this->assertSame('', $uri->getQuery());
+    }
+
+    public function testWithQueryValueReplacesSameKeys()
+    {
+        $uri = new Uri();
+        $uri = Uri::withQueryValue($uri, 'a', 'b');
+        $uri = Uri::withQueryValue($uri, 'c', 'd');
+        $uri = Uri::withQueryValue($uri, 'a', 'e');
+        $this->assertSame('c=d&a=e', $uri->getQuery());
+    }
+
+    public function testWithoutQueryValueRemovesAllSameKeys()
+    {
+        $uri = (new Uri())->withQuery('a=b&c=d&a=e');
+        $uri = Uri::withoutQueryValue($uri, 'a');
+        $this->assertSame('c=d', $uri->getQuery());
+    }
+
+    public function testRemoveNonExistingQueryValue()
+    {
+        $uri = new Uri();
+        $uri = Uri::withQueryValue($uri, 'a', 'b');
+        $uri = Uri::withoutQueryValue($uri, 'c');
+        $this->assertSame('a=b', $uri->getQuery());
     }
 
     public function testSchemeIsNormalizedToLowercase()

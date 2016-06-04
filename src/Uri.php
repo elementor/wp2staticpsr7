@@ -178,10 +178,8 @@ class Uri implements UriInterface
      * Any existing query string values that exactly match the provided key are
      * removed.
      *
-     * Note: this function will convert "=" to "%3D" and "&" to "%26".
-     *
      * @param UriInterface $uri URI to use as a base.
-     * @param string       $key Query string key value pair to remove.
+     * @param string       $key Query string key to remove.
      *
      * @return UriInterface
      */
@@ -192,9 +190,10 @@ class Uri implements UriInterface
             return $uri;
         }
 
+        $decodedKey = rawurldecode($key);
         $result = [];
         foreach (explode('&', $current) as $part) {
-            if (explode('=', $part)[0] !== $key) {
+            if (rawurldecode(explode('=', $part)[0]) !== $decodedKey) {
                 $result[] = $part;
             };
         }
@@ -208,17 +207,22 @@ class Uri implements UriInterface
      * Any existing query string values that exactly match the provided key are
      * removed and replaced with the given key value pair.
      *
-     * Note: this function will convert "=" to "%3D" and "&" to "%26".
+     * A value of null will set the query string key without a value, e.g. "key"
+     * instead of "key=value".
      *
-     * @param UriInterface $uri URI to use as a base.
-     * @param string $key   Key to set.
-     * @param string $value Value to set.
+     * @param UriInterface $uri   URI to use as a base.
+     * @param string       $key   Key to set.
+     * @param string|null  $value Value to set
      *
      * @return UriInterface
      */
     public static function withQueryValue(UriInterface $uri, $key, $value)
     {
         $current = $uri->getQuery();
+        $decodedKey = rawurldecode($key);
+        // Query string separators ("=", "&") within the key or value need to be encoded
+        // (while preventing double-encoding) before setting the query string. All other
+        // chars that need percent-encoding will be encoded by withQuery().
         $key = strtr($key, self::$replaceQuery);
 
         if ($current == '') {
@@ -226,7 +230,7 @@ class Uri implements UriInterface
         } else {
             $result = [];
             foreach (explode('&', $current) as $part) {
-                if (explode('=', $part)[0] !== $key) {
+                if (rawurldecode(explode('=', $part)[0]) !== $decodedKey) {
                     $result[] = $part;
                 };
             }
