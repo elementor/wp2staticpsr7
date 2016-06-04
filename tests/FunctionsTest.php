@@ -439,7 +439,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     {
         $request = new Psr7\Request('PUT', 'http://foo.com/hi?123', [
             'Baz' => 'bar',
-            'Qux' => ' ipsum'
+            'Qux' => 'ipsum'
         ], 'hello', '1.0');
         $this->assertEquals(
             "PUT /hi?123 HTTP/1.0\r\nHost: foo.com\r\nBaz: bar\r\nQux: ipsum\r\n\r\nhello",
@@ -451,7 +451,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     {
         $response = new Psr7\Response(200, [
             'Baz' => 'bar',
-            'Qux' => ' ipsum'
+            'Qux' => 'ipsum'
         ], 'hello', '1.0', 'FOO');
         $this->assertEquals(
             "HTTP/1.0 200 FOO\r\nBaz: bar\r\nQux: ipsum\r\n\r\nhello",

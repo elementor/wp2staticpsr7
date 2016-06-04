@@ -25,18 +25,18 @@ class Request implements RequestInterface
     private $uri;
 
     /**
-     * @param string $method HTTP method for the request.
-     * @param string|UriInterface $uri URI for the request.
-     * @param array $headers Headers for the message.
-     * @param string|null|resource|StreamInterface $body Message body.
-     * @param string $protocolVersion HTTP protocol version.
+     * @param string                               $method  HTTP method
+     * @param string|UriInterface                  $uri     URI
+     * @param array                                $headers Request headers
+     * @param string|null|resource|StreamInterface $body    Request body
+     * @param string                               $version Protocol version
      */
     public function __construct(
         $method,
         $uri,
         array $headers = [],
         $body = null,
-        $protocolVersion = '1.1'
+        $version = '1.1'
     ) {
         if (!($uri instanceof UriInterface)) {
             $uri = new Uri($uri);
@@ -45,7 +45,7 @@ class Request implements RequestInterface
         $this->method = strtoupper($method);
         $this->uri = $uri;
         $this->setHeaders($headers);
-        $this->protocol = $protocolVersion;
+        $this->protocol = $version;
 
         if (!$this->hasHeader('Host')) {
             $this->updateHostFromUri();
@@ -138,9 +138,14 @@ class Request implements RequestInterface
             $host .= ':' . $port;
         }
 
+        if (isset($this->headerNames['host'])) {
+            $header = $this->headerNames['host'];
+        } else {
+            $header = 'Host';
+            $this->headerNames['host'] = 'Host';
+        }
         // Ensure Host is the first header.
         // See: http://tools.ietf.org/html/rfc7230#section-5.4
-        $this->headerLines = ['Host' => [$host]] + $this->headerLines;
-        $this->headers = ['host' => [$host]] + $this->headers;
+        $this->headers = [$header => [$host]] + $this->headers;
     }
 }
