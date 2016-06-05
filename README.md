@@ -500,7 +500,7 @@ an associative array (e.g., `foo[a]=1&foo[b]=2` will be parsed into
 
 Build a query string from an array of key value pairs.
 
-This function can use the return value of parseQuery() to build a query string.
+This function can use the return value of parse_query() to build a query string.
 This function does not modify the provided keys when an array is encountered
 (like http_build_query would).
 
@@ -551,8 +551,6 @@ Create a new URI with a specific query string value.
 Any existing query string values that exactly match the provided key are
 removed and replaced with the given key value pair.
 
-Note: this function will convert "=" to "%3D" and "&" to "%26".
-
 
 ## `GuzzleHttp\Psr7\Uri::withoutQueryValue`
 
@@ -562,8 +560,6 @@ Create a new URI with a specific query string value removed.
 
 Any existing query string values that exactly match the provided key are
 removed.
-
-Note: this function will convert "=" to "%3D" and "&" to "%26".
 
 
 ## `GuzzleHttp\Psr7\Uri::fromParts`

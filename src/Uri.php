@@ -191,12 +191,9 @@ class Uri implements UriInterface
         }
 
         $decodedKey = rawurldecode($key);
-        $result = [];
-        foreach (explode('&', $current) as $part) {
-            if (rawurldecode(explode('=', $part)[0]) !== $decodedKey) {
-                $result[] = $part;
-            };
-        }
+        $result = array_filter(explode('&', $current), function ($part) use ($decodedKey) {
+            return rawurldecode(explode('=', $part)[0]) !== $decodedKey;
+        });
 
         return $uri->withQuery(implode('&', $result));
     }
@@ -219,22 +216,20 @@ class Uri implements UriInterface
     public static function withQueryValue(UriInterface $uri, $key, $value)
     {
         $current = $uri->getQuery();
-        $decodedKey = rawurldecode($key);
-        // Query string separators ("=", "&") within the key or value need to be encoded
-        // (while preventing double-encoding) before setting the query string. All other
-        // chars that need percent-encoding will be encoded by withQuery().
-        $key = strtr($key, self::$replaceQuery);
 
         if ($current == '') {
             $result = [];
         } else {
-            $result = [];
-            foreach (explode('&', $current) as $part) {
-                if (rawurldecode(explode('=', $part)[0]) !== $decodedKey) {
-                    $result[] = $part;
-                };
-            }
+            $decodedKey = rawurldecode($key);
+            $result = array_filter(explode('&', $current), function ($part) use ($decodedKey) {
+                return rawurldecode(explode('=', $part)[0]) !== $decodedKey;
+            });
         }
+
+        // Query string separators ("=", "&") within the key or value need to be encoded
+        // (while preventing double-encoding) before setting the query string. All other
+        // chars that need percent-encoding will be encoded by withQuery().
+        $key = strtr($key, self::$replaceQuery);
 
         if ($value !== null) {
             $result[] = $key . '=' . strtr($value, self::$replaceQuery);
