@@ -619,10 +619,7 @@ class Uri implements UriInterface
             throw new \InvalidArgumentException('The path of a URI with an authority must start with a slash "/" or be empty');
         }
 
-        if ($this->scheme === ''
-            && false !== ($colonPos = strpos($this->path, ':'))
-            && ($colonPos < ($slashPos = strpos($this->path, '/')) || false === $slashPos)
-        ) {
+        if ($this->scheme === '' && false !== strpos(explode('/', $this->path, 2)[0], ':')) {
             throw new \InvalidArgumentException('A relative URI must not have a path beginning with a segment containing a colon');
         }
     }
