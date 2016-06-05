@@ -615,12 +615,11 @@ class Uri implements UriInterface
             if (0 === strpos($this->path, '//')) {
                 throw new \InvalidArgumentException('The path of a URI without an authority must not start with two slashes "//"');
             }
+            if ($this->scheme === '' && false !== strpos(explode('/', $this->path, 2)[0], ':')) {
+                throw new \InvalidArgumentException('A relative URI must not have a path beginning with a segment containing a colon');
+            }
         } elseif (isset($this->path[0]) && $this->path[0] !== '/') {
             throw new \InvalidArgumentException('The path of a URI with an authority must start with a slash "/" or be empty');
-        }
-
-        if ($this->scheme === '' && false !== strpos(explode('/', $this->path, 2)[0], ':')) {
-            throw new \InvalidArgumentException('A relative URI must not have a path beginning with a segment containing a colon');
         }
     }
 }
