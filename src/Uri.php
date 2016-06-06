@@ -76,6 +76,32 @@ class Uri implements UriInterface
     }
 
     /**
+     * Whether the given URI is a so-called "same-document" reference.
+     *
+     * A same-document reference refers to a URI that is, aside from its fragment
+     * component, identical to the base URI. When no base URI is given, only an empty
+     * URI reference (apart from its fragment) is considered a same-document reference.
+     *
+     * @param UriInterface      $uri  The URI to check
+     * @param UriInterface|null $base An optional base URI to compare against
+     *
+     * @return bool
+     * @link https://tools.ietf.org/html/rfc3986#section-4.4
+     */
+    public static function isSameDocumentReference(UriInterface $uri, UriInterface $base = null)
+    {
+        if ($base) {
+            return ($uri->getScheme() === $base->getScheme() || $uri->getScheme() === '')
+                && ($uri->getAuthority() === $base->getAuthority() || $uri->getAuthority() === '')
+                && ($uri->getPath() === $base->getPath() || $uri->getPath() === '')
+                && ($uri->getQuery() === $base->getQuery() || $uri->getQuery() === '')
+            ;
+        }
+
+        return $uri->getScheme() === '' && $uri->getAuthority() === '' && $uri->getPath() === '' && $uri->getQuery() === '';
+    }
+
+    /**
      * Removes dot segments from a path and returns the new path.
      *
      * @param string $path
@@ -119,7 +145,7 @@ class Uri implements UriInterface
     }
 
     /**
-     * Resolve a base URI with a relative URI and return a new URI.
+     * Converts the relative URI into a new URI that is resolved against the base URI.
      *
      * @param UriInterface        $base Base URI
      * @param string|UriInterface $rel  Relative URI
@@ -178,6 +204,88 @@ class Uri implements UriInterface
             $targetQuery,
             $rel->getFragment()
         ));
+    }
+
+    /**
+     * Returns the target URI as a relative reference from the base URI.
+     *
+     * This method is the counterpart to resolve():
+     *
+     *    (string) $target === (string) Uri::resolve($base, Uri::relativize($base, $target))
+     *
+     * One use-case is to use the current request URI as base URI and then generate relative links in your documents
+     * to reduce the document size or offer self-contained downloadable document archives.
+     *
+     * @param UriInterface $base   Base URI
+     * @param UriInterface $target Target URI
+     *
+     * @return UriInterface The relative URI reference
+     */
+    public static function relativize(UriInterface $base, UriInterface $target)
+    {
+        if ($base->getScheme() !== $target->getScheme() && $target->getScheme() !== '') {
+            return $target;
+        }
+
+        if ($base->getAuthority() !== $target->getAuthority() && $target->getAuthority() !== '') {
+            return $target->withScheme('');
+        }
+
+        $basePath = self::getNormalizedPath($base);
+        $targetPath = self::getNormalizedPath($target);
+
+        // We must remove the path before removing the authority because if the path starts with two slashes, the URI
+        // would turn invalid. See validateState().
+        $pathUri = $target->withScheme('')->withPath('')->withUserInfo('')->withPort(null)->withHost('');
+
+        if ($basePath === $targetPath) {
+            if ($base->getQuery() === $target->getQuery()) {
+                // Only the target fragment is left. And it must be returned even if base and target fragment are the same.
+                return $pathUri->withQuery('');
+            }
+
+            return $pathUri;
+        }
+
+        $sourceDirs = explode('/', isset($basePath[0]) && '/' === $basePath[0] ? substr($basePath, 1) : $basePath);
+        $targetDirs = explode('/', isset($targetPath[0]) && '/' === $targetPath[0] ? substr($targetPath, 1) : $targetPath);
+        array_pop($sourceDirs);
+        $targetFile = array_pop($targetDirs);
+        foreach ($sourceDirs as $i => $dir) {
+            if (isset($targetDirs[$i]) && $dir === $targetDirs[$i]) {
+                unset($sourceDirs[$i], $targetDirs[$i]);
+            } else {
+                break;
+            }
+        }
+        $targetDirs[] = $targetFile;
+        $relativePath = str_repeat('../', count($sourceDirs)) . implode('/', $targetDirs);
+        // A reference to the same base directory or an empty subdirectory must be prefixed with "./".
+        // This also applies to a segment with a colon character (e.g., "file:colon") that cannot be used
+        // as the first segment of a relative-path reference, as it would be mistaken for a scheme name.
+        if ('' === $relativePath || '/' === $relativePath[0] || false !== strpos(explode('/', $relativePath, 2)[0], ':')) {
+            $relativePath = "./$relativePath";
+        }
+
+        return $pathUri->withPath($relativePath);
+    }
+
+    /**
+     * For http(s) URIs:
+     * An empty path component is equivalent to an absolute path of "/", so the normal form is to provide a path of "/" instead.
+     * https://tools.ietf.org/html/rfc7230#section-2.7.3
+     *
+     * @param UriInterface $uri
+     *
+     * @return string
+     */
+    private static function getNormalizedPath(UriInterface $uri)
+    {
+        if (($uri->getScheme() === 'http' || $uri->getScheme() === 'https') && $uri->getPath() === '') {
+            return '/';
+        }
+
+        return self::removeDotSegments($uri->getPath());
     }
 
     /**

@@ -221,11 +221,33 @@ class UriTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getResolveTestCases
      */
-    public function testResolvesUris($base, $rel, $expected)
+    public function testResolveUri($base, $rel, $expectedTarget)
     {
-        $uri = new Uri($base);
-        $actual = Uri::resolve($uri, $rel);
-        $this->assertSame($expected, (string) $actual);
+        $targetUri = Uri::resolve(new Uri($base), $rel);
+
+        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $targetUri);
+        $this->assertSame($expectedTarget, (string) $targetUri);
+    }
+
+    /**
+     * @dataProvider getResolveTestCases
+     */
+    public function testRelativizeUri($base, $expectedRelativeReference, $target)
+    {
+        $baseUri = new Uri($base);
+        $relativeUri = Uri::relativize($baseUri, new Uri($target));
+
+        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $relativeUri);
+        // There are test-cases with too many dot-segments and relative references that are equal like "." == "./".
+        // So apart from the same-as condition, this alternative success condition is necessary.
+        $this->assertTrue(
+            $expectedRelativeReference === (string) $relativeUri
+            || $target === (string) Uri::resolve($baseUri, $relativeUri),
+            sprintf(
+                '"%s" is not the correct relative reference as it does not resolve to the target URI from the base URI',
+                (string) $relativeUri
+            )
+        );
     }
 
     public function getResolveTestCases()
@@ -276,16 +298,45 @@ class UriTest extends \PHPUnit_Framework_TestCase
             [self::RFC3986_BASE, 'g#s/../x',      'http://a/b/c/g#s/../x'],
             [self::RFC3986_BASE, 'g#s/../x',      'http://a/b/c/g#s/../x'],
             [self::RFC3986_BASE, '?y#s',          'http://a/b/c/d;p?y#s'],
-            ['http://a/b/c/d;p?q#s', '?y',        'http://a/b/c/d;p?y'],
+            // base with fragment
+            ['http://a/b/c?q#s', '?y',            'http://a/b/c?y'],
+            // base with user info
             ['http://u@a/b/c/d;p?q', '.',         'http://u@a/b/c/'],
             ['http://u:p@a/b/c/d;p?q', '.',       'http://u:p@a/b/c/'],
-            ['http://a/b/c/d/', 'e',              'http://a/b/c/d/e'],
-            ['urn:no-slash', 'e',                 'urn:e'],
+            // path ending with slash or no slash at all
+            ['http://a/b/c/d/',  'e',             'http://a/b/c/d/e'],
+            ['urn:no-slash',     'e',             'urn:e'],
             // falsey relative parts
             [self::RFC3986_BASE, '//0',           'http://0'],
             [self::RFC3986_BASE, '0',             'http://a/b/c/0'],
             [self::RFC3986_BASE, '?0',            'http://a/b/c/d;p?0'],
             [self::RFC3986_BASE, '#0',            'http://a/b/c/d;p?q#0'],
+            // absolute path base URI
+            ['/a/b/',            '',              '/a/b/'],
+            ['/a/b',             '',              '/a/b'],
+            ['/',                'a',             '/a'],
+            ['/',                'a/b',           '/a/b'],
+            ['/a/b',             'g',             '/a/g'],
+            ['/a/b/c',           './',            '/a/b/'],
+            ['/a/b/',            '../',           '/a/'],
+            ['/a/b/c',           '../',           '/a/'],
+            ['/a/b/',            '../../x/y/z/',  '/x/y/z/'],
+            ['/a/b/c/d/e',       '../../../c/d',  '/a/c/d'],
+            ['/a/b/c//',         '../',           '/a/b/c/'],
+            ['/a/b/c/',          './/',           '/a/b/c//'],
+            ['/a/b/c',           '../../../../a', '/a'],
+            ['/a/b/c',           '../../../..',   '/'],
+            // not actually a dot-segment
+            ['/a/b/c',           '..a/b..',           '/a/b/..a/b..'],
+            // path with colon: "with:colon" would be the wrong relative reference
+            ['/a/',              './with:colon',  '/a/with:colon'],
+            ['/a/',              'b/with:colon',  '/a/b/with:colon'],
+            ['/a/',              './:b/',         '/a/:b/'],
+            // relative path references
+            ['rootless',         'a/b',           'a/b'],
+            ['',                 '',              ''],
+            // network path references and path starting with two slashes
+            ['//example.com//two-slashes', './',  '//example.com//'],
         ];
     }
 
@@ -633,6 +684,38 @@ class UriTest extends \PHPUnit_Framework_TestCase
             'GuzzleHttp\Tests\Psr7\ExtendedUriTest',
             new ExtendedUriTest('http://h:9/')
         );
+    }
+
+    /**
+     * @dataProvider provideRelativePaths
+     */
+    public function testGetRelativePath($base, $target, $expectedRelativeReference)
+    {
+        $baseUri = new Uri($base);
+        $targetUri = new Uri($target);
+        $relativeUri = Uri::relativize($baseUri, $targetUri);
+
+        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $relativeUri);
+        $this->assertSame($expectedRelativeReference, (string) $relativeUri);
+
+        $this->assertSame((string) Uri::resolve($baseUri, $targetUri), (string) Uri::resolve($baseUri, $relativeUri));
+    }
+
+    public function provideRelativePaths()
+    {
+        return [
+            [
+                // Needs to remove dot segments automatically to handle this
+                '/a/b/../c/', // == '/a/c/'
+                '/a/b/..', // == '/a/'
+                '../',
+            ],
+            [
+                'http://example.com/a/',
+                '//example.com/a/b',
+                'b',
+            ],
+        ];
     }
 }
 
