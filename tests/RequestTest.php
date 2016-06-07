@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Tests\Psr7;
 
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
 
@@ -49,6 +50,21 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $r = new Request('GET', '/', [], '0');
         $this->assertInstanceOf('Psr\Http\Message\StreamInterface', $r->getBody());
         $this->assertSame('0', (string) $r->getBody());
+    }
+
+    public function testConstructorDoesNotReadStreamBody()
+    {
+        $streamIsRead = false;
+        $body = Psr7\FnStream::decorate(Psr7\stream_for(''), [
+            '__toString' => function () use (&$streamIsRead) {
+                $streamIsRead = true;
+                return '';
+            }
+        ]);
+
+        $r = new Request('GET', '/', [], $body);
+        $this->assertFalse($streamIsRead);
+        $this->assertSame($body, $r->getBody());
     }
 
     public function testCapitalizesMethod()

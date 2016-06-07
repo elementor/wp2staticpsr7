@@ -1,8 +1,8 @@
 <?php
 namespace GuzzleHttp\Tests\Psr7;
 
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\Response;
 
 /**
  * @covers GuzzleHttp\Psr7\MessageTrait
@@ -26,6 +26,21 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $r = new Response(404);
         $this->assertSame(404, $r->getStatusCode());
         $this->assertSame('Not Found', $r->getReasonPhrase());
+    }
+
+    public function testConstructorDoesNotReadStreamBody()
+    {
+        $streamIsRead = false;
+        $body = Psr7\FnStream::decorate(Psr7\stream_for(''), [
+            '__toString' => function () use (&$streamIsRead) {
+                $streamIsRead = true;
+                return '';
+            }
+        ]);
+
+        $r = new Response(200, [], $body);
+        $this->assertFalse($streamIsRead);
+        $this->assertSame($body, $r->getBody());
     }
 
     public function testStatusCanBeNumericString()

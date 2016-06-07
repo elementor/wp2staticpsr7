@@ -11,9 +11,7 @@ use Psr\Http\Message\UriInterface;
  */
 class Request implements RequestInterface
 {
-    use MessageTrait {
-        withHeader as protected withParentHeader;
-    }
+    use MessageTrait;
 
     /** @var string */
     private $method;
@@ -51,7 +49,7 @@ class Request implements RequestInterface
             $this->updateHostFromUri();
         }
 
-        if ($body != '') {
+        if ($body !== '' && $body !== null) {
             $this->stream = stream_for($body);
         }
     }
@@ -117,13 +115,6 @@ class Request implements RequestInterface
         }
 
         return $new;
-    }
-
-    public function withHeader($header, $value)
-    {
-        /** @var Request $newInstance */
-        $newInstance = $this->withParentHeader($header, $value);
-        return $newInstance;
     }
 
     private function updateHostFromUri()
