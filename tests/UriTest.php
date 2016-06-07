@@ -250,6 +250,21 @@ class UriTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    /**
+     * @dataProvider getRelativizeTestCases
+     */
+    public function testRelativizeUriWithUniqueTests($base, $target, $expectedRelativeReference)
+    {
+        $baseUri = new Uri($base);
+        $targetUri = new Uri($target);
+        $relativeUri = Uri::relativize($baseUri, $targetUri);
+
+        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $relativeUri);
+        $this->assertSame($expectedRelativeReference, (string) $relativeUri);
+
+        $this->assertSame((string) Uri::resolve($baseUri, $targetUri), (string) Uri::resolve($baseUri, $relativeUri));
+    }
+
     public function getResolveTestCases()
     {
         return [
@@ -328,15 +343,98 @@ class UriTest extends \PHPUnit_Framework_TestCase
             ['/a/b/c',           '../../../..',   '/'],
             // not actually a dot-segment
             ['/a/b/c',           '..a/b..',           '/a/b/..a/b..'],
+            // '' cannot be used as relative reference as it would inherit the base query component
+            ['/a/b?q',           'b',             '/a/b'],
+            ['/a/b/?q',          './',            '/a/b/'],
             // path with colon: "with:colon" would be the wrong relative reference
             ['/a/',              './with:colon',  '/a/with:colon'],
             ['/a/',              'b/with:colon',  '/a/b/with:colon'],
             ['/a/',              './:b/',         '/a/:b/'],
             // relative path references
-            ['rootless',         'a/b',           'a/b'],
+            ['a',               'a/b',            'a/b'],
+            ['a/b',             'c',              'a/c'],
             ['',                 '',              ''],
-            // network path references and path starting with two slashes
+            ['',                 '..',            ''],
+            ['a',                '.',             ''],
+            ['a',                './',            ''],
+            ['/',                '..',            '/'],
+            // network path references
+            // empty base path and relative-path reference
+            ['//example.com',    'a',   '//example.com/a'],
+            // path starting with two slashes
             ['//example.com//two-slashes', './',  '//example.com//'],
+            ['//example.com',    './/',           '//example.com//'],
+            ['//example.com/',   './/',           '//example.com//'],
+            // base URI has less components than relative URI
+            ['/',                '//a/b?q#h',     '//a/b?q#h'],
+        ];
+    }
+
+    /**
+     * Some additional tests to getResolveTestCases() that only make sense for relativize.
+     */
+    public function getRelativizeTestCases()
+    {
+        return [
+            [
+                '/a/b/?q',
+                '#h',
+                './#h',
+            ],
+            [
+                '/a/b/?q',
+                'c#h',
+                'c#h',
+            ],
+            [
+                'http://a',
+                'http://a/',
+                './',
+            ],
+            [
+                'urn:a/b?q',
+                'urn:x/y?q',
+                '../x/y?q',
+            ],
+            // Needs to remove dot segments automatically to handle this.
+            // Otherwise it would return the wrong result '../../..'
+            [
+                '/a/b/../c/', // == '/a/c/'
+                '/a/b/..', // == '/a/'
+                '../',
+            ],
+            // target URI has less components than base URI
+            [
+                'http://a/b/',
+                '//a/b/c',
+                'c',
+            ],
+            [
+                'http://a/b/',
+                '/b/c',
+                'c',
+            ],
+            [
+                'http://a/b/',
+                '/x/y',
+                '../x/y',
+            ],
+            [
+                'http://a/b/',
+                '/',
+                '../',
+            ],
+            // relative target path
+            [
+                'http://a/b/',
+                'c',
+                'c',
+            ],
+            [
+                'http://a/b/',
+                '',
+                '',
+            ],
         ];
     }
 
@@ -684,38 +782,6 @@ class UriTest extends \PHPUnit_Framework_TestCase
             'GuzzleHttp\Tests\Psr7\ExtendedUriTest',
             new ExtendedUriTest('http://h:9/')
         );
-    }
-
-    /**
-     * @dataProvider provideRelativePaths
-     */
-    public function testGetRelativePath($base, $target, $expectedRelativeReference)
-    {
-        $baseUri = new Uri($base);
-        $targetUri = new Uri($target);
-        $relativeUri = Uri::relativize($baseUri, $targetUri);
-
-        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $relativeUri);
-        $this->assertSame($expectedRelativeReference, (string) $relativeUri);
-
-        $this->assertSame((string) Uri::resolve($baseUri, $targetUri), (string) Uri::resolve($baseUri, $relativeUri));
-    }
-
-    public function provideRelativePaths()
-    {
-        return [
-            [
-                // Needs to remove dot segments automatically to handle this
-                '/a/b/../c/', // == '/a/c/'
-                '/a/b/..', // == '/a/'
-                '../',
-            ],
-            [
-                'http://example.com/a/',
-                '//example.com/a/b',
-                'b',
-            ],
-        ];
     }
 }
 

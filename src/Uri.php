@@ -111,10 +111,7 @@ class Uri implements UriInterface
      */
     public static function removeDotSegments($path)
     {
-        static $noopPaths = ['' => true, '/' => true, '*' => true];
-        static $ignoreSegments = ['.' => true, '..' => true];
-
-        if (isset($noopPaths[$path])) {
+        if ($path === '' || $path === '/') {
             return $path;
         }
 
@@ -123,21 +120,19 @@ class Uri implements UriInterface
         foreach ($segments as $segment) {
             if ($segment === '..') {
                 array_pop($results);
-            } elseif (!isset($ignoreSegments[$segment])) {
+            } elseif ($segment !== '.') {
                 $results[] = $segment;
             }
         }
 
         $newPath = implode('/', $results);
-        // Add the leading slash if necessary
-        if (substr($path, 0, 1) === '/' &&
-            substr($newPath, 0, 1) !== '/'
-        ) {
-            $newPath = '/' . $newPath;
-        }
 
-        // Add the trailing slash if necessary
-        if ($newPath !== '/' && isset($ignoreSegments[end($segments)])) {
+        if ($path[0] === '/' && (!isset($newPath[0]) || $newPath[0] !== '/')) {
+            // Re-add the leading slash if necessary for cases like "/.."
+            $newPath = '/' . $newPath;
+        } elseif ($newPath !== '' && ($segment === '.' || $segment === '..')) {
+            // Add the trailing slash if necessary
+            // If newPath is not empty, then $segment must be set and is the last segment from the foreach
             $newPath .= '/';
         }
 
@@ -244,11 +239,19 @@ class Uri implements UriInterface
                 return $pathUri->withQuery('');
             }
 
-            return $pathUri;
+            // If the base URI has a query but the target has none, we cannot return an empty path reference as it would
+            // inherit the base query component when resolving.
+            if ($target->getQuery() !== '') {
+                return $pathUri;
+            }
         }
 
-        $sourceDirs = explode('/', isset($basePath[0]) && '/' === $basePath[0] ? substr($basePath, 1) : $basePath);
-        $targetDirs = explode('/', isset($targetPath[0]) && '/' === $targetPath[0] ? substr($targetPath, 1) : $targetPath);
+        if ($target->getScheme() === '' && (!isset($targetPath[0]) || $targetPath[0] !== '/')) {
+            //return $pathUri->withPath($targetPath);
+        }
+
+        $sourceDirs = explode('/', $basePath);
+        $targetDirs = explode('/', $targetPath);
         array_pop($sourceDirs);
         $targetFile = array_pop($targetDirs);
         foreach ($sourceDirs as $i => $dir) {
@@ -258,13 +261,24 @@ class Uri implements UriInterface
                 break;
             }
         }
-        $targetDirs[] = $targetFile;
+        if ($targetFile !== false) {
+            $targetDirs[] = $targetFile;
+        } else {
+            $targetDirs[] = '.';
+        }
         $relativePath = str_repeat('../', count($sourceDirs)) . implode('/', $targetDirs);
         // A reference to the same base directory or an empty subdirectory must be prefixed with "./".
         // This also applies to a segment with a colon character (e.g., "file:colon") that cannot be used
         // as the first segment of a relative-path reference, as it would be mistaken for a scheme name.
-        if ('' === $relativePath || '/' === $relativePath[0] || false !== strpos(explode('/', $relativePath, 2)[0], ':')) {
+        if ('' === $relativePath || false !== strpos(explode('/', $relativePath, 2)[0], ':')) {
             $relativePath = "./$relativePath";
+        } elseif ('/' === $relativePath[0]) {
+            if ($base->getAuthority() != '' && $base->getPath() === '') {
+                // In this case an extra slash is added by resolve() automatically. So we must not add one here.
+                $relativePath = ".$relativePath";
+            } else {
+                $relativePath = "./$relativePath";
+            }
         }
 
         return $pathUri->withPath($relativePath);
@@ -282,7 +296,7 @@ class Uri implements UriInterface
     private static function getNormalizedPath(UriInterface $uri)
     {
         if (($uri->getScheme() === 'http' || $uri->getScheme() === 'https') && $uri->getPath() === '') {
-            return '/';
+            //return '/';
         }
 
         return self::removeDotSegments($uri->getPath());
