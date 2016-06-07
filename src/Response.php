@@ -94,7 +94,7 @@ class Response implements ResponseInterface
     ) {
         $this->statusCode = (int) $status;
 
-        if ($body != '') {
+        if ($body !== '' && $body !== null) {
             $this->stream = stream_for($body);
         }
 
