@@ -223,10 +223,14 @@ class UriTest extends \PHPUnit_Framework_TestCase
      */
     public function testResolveUri($base, $rel, $expectedTarget)
     {
-        $targetUri = Uri::resolve(new Uri($base), $rel);
+        $baseUri = new Uri($base);
+        $targetUri = Uri::resolve($baseUri, $rel);
 
         $this->assertInstanceOf('Psr\Http\Message\UriInterface', $targetUri);
         $this->assertSame($expectedTarget, (string) $targetUri);
+        // This ensures there are no test cases that only work in the resolve() direction
+        // but not the opposite via relativize().
+        $this->assertSame($expectedTarget, (string) Uri::resolve($baseUri, $targetUri));
     }
 
     /**
@@ -352,15 +356,13 @@ class UriTest extends \PHPUnit_Framework_TestCase
             ['/a/',              './:b/',         '/a/:b/'],
             // relative path references
             ['a',               'a/b',            'a/b'],
-            ['a/b',             'c',              'a/c'],
             ['',                 '',              ''],
             ['',                 '..',            ''],
-            ['a',                '.',             ''],
-            ['a',                './',            ''],
             ['/',                '..',            '/'],
+            ['urn:a/b',          '..//a/b',       'urn:/a/b'],
             // network path references
             // empty base path and relative-path reference
-            ['//example.com',    'a',   '//example.com/a'],
+            ['//example.com',    'a',             '//example.com/a'],
             // path starting with two slashes
             ['//example.com//two-slashes', './',  '//example.com//'],
             ['//example.com',    './/',           '//example.com//'],
@@ -376,10 +378,21 @@ class UriTest extends \PHPUnit_Framework_TestCase
     public function getRelativizeTestCases()
     {
         return [
+            ['a/b',             'b/c',          'b/c'],
+            ['a/b/c',           '../b/c',       '../b/c'],
+            ['a',               '',             ''],
+            ['a',               './',           './'],
+            ['a',               'a/..',         'a/..'],
+            ['/',               '/',            ''],
+            [
+                '/a/b/?q',
+                '?q#h',
+                '?q#h',
+            ],
             [
                 '/a/b/?q',
                 '#h',
-                './#h',
+                '#h',
             ],
             [
                 '/a/b/?q',
@@ -396,11 +409,9 @@ class UriTest extends \PHPUnit_Framework_TestCase
                 'urn:x/y?q',
                 '../x/y?q',
             ],
-            // Needs to remove dot segments automatically to handle this.
-            // Otherwise it would return the wrong result '../../..'
             [
-                '/a/b/../c/', // == '/a/c/'
-                '/a/b/..', // == '/a/'
+                'urn:a/b?q',
+                'urn:',
                 '../',
             ],
             // target URI has less components than base URI

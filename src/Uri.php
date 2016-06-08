@@ -222,36 +222,87 @@ class Uri implements UriInterface
             return $target;
         }
 
+        if (self::isRelativePathReference($target)) {
+            // As the target is already highly relative we return it as-is. It would be possible to resolve
+            // the target with `$target = self::resolve($base, $target);` and then try make it more relative
+            // by removing a duplicate query. But let's not do that automatically.
+            return $target;
+        }
+
         if ($base->getAuthority() !== $target->getAuthority() && $target->getAuthority() !== '') {
             return $target->withScheme('');
         }
 
-        $basePath = self::getNormalizedPath($base);
-        $targetPath = self::getNormalizedPath($target);
-
         // We must remove the path before removing the authority because if the path starts with two slashes, the URI
-        // would turn invalid. See validateState().
-        $pathUri = $target->withScheme('')->withPath('')->withUserInfo('')->withPort(null)->withHost('');
+        // would turn invalid. And we also cannot set a relative path before removing the authority, as that is also
+        // invalid. See validateState().
+        $emptyPathUri = $target->withScheme('')->withPath('')->withUserInfo('')->withPort(null)->withHost('');
 
-        if ($basePath === $targetPath) {
-            if ($base->getQuery() === $target->getQuery()) {
-                // Only the target fragment is left. And it must be returned even if base and target fragment are the same.
-                return $pathUri->withQuery('');
-            }
-
-            // If the base URI has a query but the target has none, we cannot return an empty path reference as it would
-            // inherit the base query component when resolving.
-            if ($target->getQuery() !== '') {
-                return $pathUri;
-            }
+        if ($base->getPath() !== $target->getPath()) {
+            return $emptyPathUri->withPath(self::getRelativePath($base, $target));
         }
 
-        if ($target->getScheme() === '' && (!isset($targetPath[0]) || $targetPath[0] !== '/')) {
-            //return $pathUri->withPath($targetPath);
+        if ($base->getQuery() === $target->getQuery()) {
+            // Only the target fragment is left. And it must be returned even if base and target fragment are the same.
+            return $emptyPathUri->withQuery('');
         }
 
-        $sourceDirs = explode('/', $basePath);
-        $targetDirs = explode('/', $targetPath);
+        // If the base URI has a query but the target has none, we cannot return an empty path reference as it would
+        // inherit the base query component when resolving.
+        if ($target->getQuery() === '') {
+            $segments = explode('/', $target->getPath());
+            $lastSegment = end($segments);
+            if ($lastSegment === '') {
+                return $emptyPathUri->withPath('./');
+            }
+
+            return $emptyPathUri->withPath($lastSegment);
+        }
+
+        return $emptyPathUri;
+    }
+
+    /**
+     * Whether the URI is a relative-path reference.
+     *
+     * A relative reference that does not begin with a slash character is termed a relative-path reference.
+     *
+     * @param UriInterface $uri
+     *
+     * @return bool
+     * @link https://tools.ietf.org/html/rfc3986#section-4.2
+     */
+    public static function isRelativePathReference(UriInterface $uri)
+    {
+        return $uri->getScheme() === ''
+            && $uri->getAuthority() === ''
+            && (!isset($uri->getPath()[0]) || $uri->getPath()[0] !== '/');
+    }
+
+    /**
+     * For http(s) URIs:
+     * An empty path component is equivalent to an absolute path of "/", so the normal form is to provide a path of "/" instead.
+     * https://tools.ietf.org/html/rfc7230#section-2.7.3
+     *
+     * @param UriInterface $uri
+     *
+     * @return string
+     */
+    private static function getNormalizedPath(UriInterface $uri)
+    {
+        if (($uri->getScheme() === 'http' || $uri->getScheme() === 'https') && $uri->getPath() === '') {
+            return '/';
+        }
+
+        // Could also remove dot segments but only irrelevant ones. The dot segments at the beginning of a relative reference
+        // should be kept.
+        return $uri->getPath();
+    }
+
+    private static function getRelativePath(UriInterface $base, UriInterface $target)
+    {
+        $sourceDirs = explode('/', $base->getPath());
+        $targetDirs = explode('/', $target->getPath());
         array_pop($sourceDirs);
         $targetFile = array_pop($targetDirs);
         foreach ($sourceDirs as $i => $dir) {
@@ -261,11 +312,7 @@ class Uri implements UriInterface
                 break;
             }
         }
-        if ($targetFile !== false) {
-            $targetDirs[] = $targetFile;
-        } else {
-            $targetDirs[] = '.';
-        }
+        $targetDirs[] = $targetFile;
         $relativePath = str_repeat('../', count($sourceDirs)) . implode('/', $targetDirs);
         // A reference to the same base directory or an empty subdirectory must be prefixed with "./".
         // This also applies to a segment with a colon character (e.g., "file:colon") that cannot be used
@@ -281,25 +328,7 @@ class Uri implements UriInterface
             }
         }
 
-        return $pathUri->withPath($relativePath);
-    }
-
-    /**
-     * For http(s) URIs:
-     * An empty path component is equivalent to an absolute path of "/", so the normal form is to provide a path of "/" instead.
-     * https://tools.ietf.org/html/rfc7230#section-2.7.3
-     *
-     * @param UriInterface $uri
-     *
-     * @return string
-     */
-    private static function getNormalizedPath(UriInterface $uri)
-    {
-        if (($uri->getScheme() === 'http' || $uri->getScheme() === 'https') && $uri->getPath() === '') {
-            //return '/';
-        }
-
-        return self::removeDotSegments($uri->getPath());
+        return $relativePath;
     }
 
     /**
