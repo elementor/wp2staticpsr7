@@ -228,8 +228,9 @@ class UriTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInstanceOf('Psr\Http\Message\UriInterface', $targetUri);
         $this->assertSame($expectedTarget, (string) $targetUri);
-        // This ensures there are no test cases that only work in the resolve() direction
-        // but not the opposite via relativize().
+        // This ensures there are no test cases that only work in the resolve() direction but not the
+        // opposite via relativize(). This can happen when both base and rel URI are relative-path
+        // references resulting in another relative-path URI.
         $this->assertSame($expectedTarget, (string) Uri::resolve($baseUri, $targetUri));
     }
 
@@ -378,74 +379,29 @@ class UriTest extends \PHPUnit_Framework_TestCase
     public function getRelativizeTestCases()
     {
         return [
+            // targets that are relative-path references are returned as-is
             ['a/b',             'b/c',          'b/c'],
             ['a/b/c',           '../b/c',       '../b/c'],
             ['a',               '',             ''],
             ['a',               './',           './'],
             ['a',               'a/..',         'a/..'],
+            ['/a/b/?q',         '?q#h',         '?q#h'],
+            ['/a/b/?q',         '#h',           '#h'],
+            ['/a/b/?q',         'c#h',          'c#h'],
+            // If the base URI has a query but the target has none, we cannot return an empty path reference as it would
+            // inherit the base query component when resolving.
+            ['/a/b/?q',         '/a/b/#h',      './#h'],
+            ['/',               '/#h',          '#h'],
             ['/',               '/',            ''],
-            [
-                '/a/b/?q',
-                '?q#h',
-                '?q#h',
-            ],
-            [
-                '/a/b/?q',
-                '#h',
-                '#h',
-            ],
-            [
-                '/a/b/?q',
-                'c#h',
-                'c#h',
-            ],
-            [
-                'http://a',
-                'http://a/',
-                './',
-            ],
-            [
-                'urn:a/b?q',
-                'urn:x/y?q',
-                '../x/y?q',
-            ],
-            [
-                'urn:a/b?q',
-                'urn:',
-                '../',
-            ],
+            ['http://a',        'http://a/',    './'],
+            ['urn:a/b?q',       'urn:x/y?q',    '../x/y?q'],
+            ['urn:',            'urn:/',        './/'],
+            ['urn:a/b?q',       'urn:',         '../'],
             // target URI has less components than base URI
-            [
-                'http://a/b/',
-                '//a/b/c',
-                'c',
-            ],
-            [
-                'http://a/b/',
-                '/b/c',
-                'c',
-            ],
-            [
-                'http://a/b/',
-                '/x/y',
-                '../x/y',
-            ],
-            [
-                'http://a/b/',
-                '/',
-                '../',
-            ],
-            // relative target path
-            [
-                'http://a/b/',
-                'c',
-                'c',
-            ],
-            [
-                'http://a/b/',
-                '',
-                '',
-            ],
+            ['http://a/b/',     '//a/b/c',      'c'],
+            ['http://a/b/',     '/b/c',         'c'],
+            ['http://a/b/',     '/x/y',         '../x/y'],
+            ['http://a/b/',     '/',            '../'],
         ];
     }
 

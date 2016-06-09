@@ -211,6 +211,17 @@ class Uri implements UriInterface
      * One use-case is to use the current request URI as base URI and then generate relative links in your documents
      * to reduce the document size or offer self-contained downloadable document archives.
      *
+     *    $base = new Uri('http://example.com/a/b/');
+     *    echo Uri::relativize($base, new Uri('http://example.com/a/b/c'));  // prints 'c'.
+     *    echo Uri::relativize($base, new Uri('http://example.com/a/x/y'));  // prints '../x/y'.
+     *    echo Uri::relativize($base, new Uri('http://example.com/a/b/?q')); // prints '?q'.
+     *    echo Uri::relativize($base, new Uri('http://example.org/a/b/'));   // prints '//example.org/a/b/'.
+     *
+     * This method also accepts a target that is already relative. A relative-path reference will be returned as-is
+     * and not be relativized further.
+     *
+     *    echo Uri::relativize($base, new Uri('/a/b/c'));  // prints 'c' as well
+     *
      * @param UriInterface $base   Base URI
      * @param UriInterface $target Target URI
      *
