@@ -76,7 +76,80 @@ class Uri implements UriInterface
     }
 
     /**
-     * Whether the given URI is a so-called "same-document" reference.
+     * Whether the URI is absolute, i.e. it has a scheme.
+     *
+     * An instance of UriInterface can either be an absolute URI or a relative reference. This method returns true
+     * if it is the former. An absolute URI has a scheme. A relative reference is used to express a URI relative
+     * to another URI, the base URI. Relative references can be divided into several forms:
+     * - network-path references, e.g. '//example.com/path'
+     * - absolute-path references, e.g. '/path'
+     * - relative-path references, e.g. 'subpath'
+     *
+     * @param UriInterface $uri
+     *
+     * @return bool
+     * @see Uri::isNetworkPathReference
+     * @see Uri::isAbsolutePathReference
+     * @see Uri::isRelativePathReference
+     * @link https://tools.ietf.org/html/rfc3986#section-4.2
+     */
+    public static function isAbsolute(UriInterface $uri)
+    {
+        return $uri->getScheme() !== '';
+    }
+
+    /**
+     * Whether the URI is a network-path reference.
+     *
+     * A relative reference that begins with two slash characters is termed an network-path reference.
+     *
+     * @param UriInterface $uri
+     *
+     * @return bool
+     * @link https://tools.ietf.org/html/rfc3986#section-4.2
+     */
+    public static function isNetworkPathReference(UriInterface $uri)
+    {
+        return $uri->getScheme() === '' && $uri->getAuthority() !== '';
+    }
+
+    /**
+     * Whether the URI is a absolute-path reference.
+     *
+     * A relative reference that begins with a single slash character is termed an absolute-path reference.
+     *
+     * @param UriInterface $uri
+     *
+     * @return bool
+     * @link https://tools.ietf.org/html/rfc3986#section-4.2
+     */
+    public static function isAbsolutePathReference(UriInterface $uri)
+    {
+        return $uri->getScheme() === ''
+            && $uri->getAuthority() === ''
+            && isset($uri->getPath()[0])
+            && $uri->getPath()[0] === '/';
+    }
+
+    /**
+     * Whether the URI is a relative-path reference.
+     *
+     * A relative reference that does not begin with a slash character is termed a relative-path reference.
+     *
+     * @param UriInterface $uri
+     *
+     * @return bool
+     * @link https://tools.ietf.org/html/rfc3986#section-4.2
+     */
+    public static function isRelativePathReference(UriInterface $uri)
+    {
+        return $uri->getScheme() === ''
+            && $uri->getAuthority() === ''
+            && (!isset($uri->getPath()[0]) || $uri->getPath()[0] !== '/');
+    }
+
+    /**
+     * Whether the URI is a same-document reference.
      *
      * A same-document reference refers to a URI that is, aside from its fragment
      * component, identical to the base URI. When no base URI is given, only an empty
@@ -94,8 +167,7 @@ class Uri implements UriInterface
             return ($uri->getScheme() === $base->getScheme() || $uri->getScheme() === '')
                 && ($uri->getAuthority() === $base->getAuthority() || $uri->getAuthority() === '')
                 && ($uri->getPath() === $base->getPath() || $uri->getPath() === '')
-                && ($uri->getQuery() === $base->getQuery() || $uri->getQuery() === '')
-            ;
+                && ($uri->getQuery() === $base->getQuery() || $uri->getQuery() === '');
         }
 
         return $uri->getScheme() === '' && $uri->getAuthority() === '' && $uri->getPath() === '' && $uri->getQuery() === '';
@@ -273,59 +345,23 @@ class Uri implements UriInterface
         return $emptyPathUri;
     }
 
-    /**
-     * Whether the URI is a relative-path reference.
-     *
-     * A relative reference that does not begin with a slash character is termed a relative-path reference.
-     *
-     * @param UriInterface $uri
-     *
-     * @return bool
-     * @link https://tools.ietf.org/html/rfc3986#section-4.2
-     */
-    public static function isRelativePathReference(UriInterface $uri)
-    {
-        return $uri->getScheme() === ''
-            && $uri->getAuthority() === ''
-            && (!isset($uri->getPath()[0]) || $uri->getPath()[0] !== '/');
-    }
-
-    /**
-     * For http(s) URIs:
-     * An empty path component is equivalent to an absolute path of "/", so the normal form is to provide a path of "/" instead.
-     * https://tools.ietf.org/html/rfc7230#section-2.7.3
-     *
-     * @param UriInterface $uri
-     *
-     * @return string
-     */
-    private static function getNormalizedPath(UriInterface $uri)
-    {
-        if (($uri->getScheme() === 'http' || $uri->getScheme() === 'https') && $uri->getPath() === '') {
-            return '/';
-        }
-
-        // Could also remove dot segments but only irrelevant ones. The dot segments at the beginning of a relative reference
-        // should be kept.
-        return $uri->getPath();
-    }
-
     private static function getRelativePath(UriInterface $base, UriInterface $target)
     {
-        $sourceDirs = explode('/', $base->getPath());
-        $targetDirs = explode('/', $target->getPath());
-        array_pop($sourceDirs);
-        $targetFile = array_pop($targetDirs);
-        foreach ($sourceDirs as $i => $dir) {
-            if (isset($targetDirs[$i]) && $dir === $targetDirs[$i]) {
-                unset($sourceDirs[$i], $targetDirs[$i]);
+        $sourceSegments = explode('/', $base->getPath());
+        $targetSegments = explode('/', $target->getPath());
+        array_pop($sourceSegments);
+        $targetLastSegment = array_pop($targetSegments);
+        foreach ($sourceSegments as $i => $segment) {
+            if (isset($targetSegments[$i]) && $segment === $targetSegments[$i]) {
+                unset($sourceSegments[$i], $targetSegments[$i]);
             } else {
                 break;
             }
         }
-        $targetDirs[] = $targetFile;
-        $relativePath = str_repeat('../', count($sourceDirs)) . implode('/', $targetDirs);
-        // A reference to the same base directory or an empty subdirectory must be prefixed with "./".
+        $targetSegments[] = $targetLastSegment;
+        $relativePath = str_repeat('../', count($sourceSegments)) . implode('/', $targetSegments);
+
+        // A reference to am empty last segment or an empty first sub-segment must be prefixed with "./".
         // This also applies to a segment with a colon character (e.g., "file:colon") that cannot be used
         // as the first segment of a relative-path reference, as it would be mistaken for a scheme name.
         if ('' === $relativePath || false !== strpos(explode('/', $relativePath, 2)[0], ':')) {
