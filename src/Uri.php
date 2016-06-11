@@ -20,9 +20,18 @@ class Uri implements UriInterface
      */
     const HTTP_DEFAULT_HOST = 'localhost';
 
-    private static $schemes = [
+    private static $defaultPorts = [
         'http'  => 80,
         'https' => 443,
+        'ftp' => 21,
+        'gopher' => 70,
+        'nntp' => 119,
+        'news' => 119,
+        'telnet' => 23,
+        'tn3270' => 23,
+        'imap' => 143,
+        'pop' => 110,
+        'ldap' => 389,
     ];
 
     private static $charUnreserved = 'a-zA-Z0-9_\-\.~';
@@ -73,6 +82,19 @@ class Uri implements UriInterface
             $this->query,
             $this->fragment
         );
+    }
+
+    /**
+     * Whether the URI has the default port of the current scheme.
+     *
+     * @param UriInterface $uri
+     *
+     * @return bool
+     */
+    public static function isDefaultPort(UriInterface $uri)
+    {
+        return $uri->getPort() === null
+            || (isset(self::$defaultPorts[$uri->getScheme()]) && $uri->getPort() === self::$defaultPorts[$uri->getScheme()]);
     }
 
     /**
@@ -523,7 +545,7 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->scheme = $scheme;
-        $new->port = $new->filterPort($new->port);
+        $new->removeDefaultPort();
         $new->validateState();
 
         return $new;
@@ -572,6 +594,7 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->port = $port;
+        $new->removeDefaultPort();
         $new->validateState();
 
         return $new;
@@ -649,6 +672,8 @@ class Uri implements UriInterface
         if (isset($parts['pass'])) {
             $this->userInfo .= ':' . $parts['pass'];
         }
+
+        $this->removeDefaultPort();
     }
 
     /**
@@ -684,19 +709,6 @@ class Uri implements UriInterface
         }
 
         return $uri;
-    }
-
-    /**
-     * Is a given port non-standard for the current scheme?
-     *
-     * @param string $scheme
-     * @param int    $port
-     *
-     * @return bool
-     */
-    private static function isNonStandardPort($scheme, $port)
-    {
-        return !isset(self::$schemes[$scheme]) || $port !== self::$schemes[$scheme];
     }
 
     /**
@@ -751,7 +763,14 @@ class Uri implements UriInterface
             );
         }
 
-        return self::isNonStandardPort($this->scheme, $port) ? $port : null;
+        return $port;
+    }
+
+    private function removeDefaultPort()
+    {
+        if (self::isDefaultPort($this)) {
+            $this->port = null;
+        }
     }
 
     /**
