@@ -219,6 +219,100 @@ class UriTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @dataProvider getPortTestCases
+     */
+    public function testIsDefaultPort($scheme, $port, $isDefaultPort)
+    {
+        $uri = $this->getMock('Psr\Http\Message\UriInterface');
+        $uri->expects($this->any())->method('getScheme')->will($this->returnValue($scheme));
+        $uri->expects($this->any())->method('getPort')->will($this->returnValue($port));
+
+        $this->assertSame($isDefaultPort, Uri::isDefaultPort($uri));
+    }
+
+    public function getPortTestCases()
+    {
+        return [
+            ['http', null, true],
+            ['http', 80, true],
+            ['http', 8080, false],
+            ['https', null, true],
+            ['https', 443, true],
+            ['https', 444, false],
+            ['ftp', 21, true],
+            ['gopher', 70, true],
+            ['nntp', 119, true],
+            ['news', 119, true],
+            ['telnet', 23, true],
+            ['tn3270', 23, true],
+            ['imap', 143, true],
+            ['pop', 110, true],
+            ['ldap', 389, true],
+        ];
+    }
+
+    public function testIsAbsolute()
+    {
+        $this->assertTrue(Uri::isAbsolute(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isAbsolute(new Uri('//example.org')));
+        $this->assertFalse(Uri::isAbsolute(new Uri('/abs-path')));
+        $this->assertFalse(Uri::isAbsolute(new Uri('rel-path')));
+    }
+
+    public function testIsNetworkPathReference()
+    {
+        $this->assertFalse(Uri::isNetworkPathReference(new Uri('http://example.org')));
+        $this->assertTrue(Uri::isNetworkPathReference(new Uri('//example.org')));
+        $this->assertFalse(Uri::isNetworkPathReference(new Uri('/abs-path')));
+        $this->assertFalse(Uri::isNetworkPathReference(new Uri('rel-path')));
+    }
+
+    public function testIsAbsolutePathReference()
+    {
+        $this->assertFalse(Uri::isAbsolutePathReference(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isAbsolutePathReference(new Uri('//example.org')));
+        $this->assertTrue(Uri::isAbsolutePathReference(new Uri('/abs-path')));
+        $this->assertTrue(Uri::isAbsolutePathReference(new Uri('/')));
+        $this->assertFalse(Uri::isAbsolutePathReference(new Uri('rel-path')));
+    }
+
+    public function testIsRelativePathReference()
+    {
+        $this->assertFalse(Uri::isRelativePathReference(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isRelativePathReference(new Uri('//example.org')));
+        $this->assertFalse(Uri::isRelativePathReference(new Uri('/abs-path')));
+        $this->assertTrue(Uri::isRelativePathReference(new Uri('rel-path')));
+        $this->assertTrue(Uri::isRelativePathReference(new Uri('')));
+    }
+
+    public function testIsSameDocumentReference()
+    {
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('//example.org')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('/abs-path')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('rel-path')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('?query')));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('')));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('#fragment')));
+
+        $baseUri = new Uri('http://example.org/path?foo=bar');
+
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('/path?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('path?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('//example.org/path?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('http://example.org/path?foo=bar#fragment'), $baseUri));
+
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('https://example.org/path?foo=bar'), $baseUri));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.com/path?foo=bar'), $baseUri));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.org/'), $baseUri));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.org'), $baseUri));
+
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('urn:/path'), new Uri('urn://example.com/path')));
+    }
+
+    /**
      * @dataProvider getResolveTestCases
      */
     public function testResolveUri($base, $rel, $expectedTarget)
@@ -370,6 +464,7 @@ class UriTest extends \PHPUnit_Framework_TestCase
             ['//example.com/',   './/',           '//example.com//'],
             // base URI has less components than relative URI
             ['/',                '//a/b?q#h',     '//a/b?q#h'],
+            ['/',                'urn:/',         'urn:/'],
         ];
     }
 

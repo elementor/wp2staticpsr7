@@ -186,10 +186,12 @@ class Uri implements UriInterface
     public static function isSameDocumentReference(UriInterface $uri, UriInterface $base = null)
     {
         if ($base) {
-            return ($uri->getScheme() === $base->getScheme() || $uri->getScheme() === '')
-                && ($uri->getAuthority() === $base->getAuthority() || $uri->getAuthority() === '')
-                && ($uri->getPath() === $base->getPath() || $uri->getPath() === '')
-                && ($uri->getQuery() === $base->getQuery() || $uri->getQuery() === '');
+            $uri = self::resolve($base, $uri);
+
+            return ($uri->getScheme() === $base->getScheme())
+                && ($uri->getAuthority() === $base->getAuthority())
+                && ($uri->getPath() === $base->getPath())
+                && ($uri->getQuery() === $base->getQuery());
         }
 
         return $uri->getScheme() === '' && $uri->getAuthority() === '' && $uri->getPath() === '' && $uri->getQuery() === '';
