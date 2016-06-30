@@ -59,6 +59,27 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('', (string) $s2);
     }
 
+    public function testCopyToStreamReadsInChunksInsteadOfAllInMemory()
+    {
+        $sizes = [];
+        $s1 = new Psr7\FnStream([
+            'eof' => function() {
+                return false;
+            },
+            'read' => function($size) use (&$sizes) {
+                $sizes[] = $size;
+                return str_repeat('.', $size);
+            }
+        ]);
+        $s2 = Psr7\stream_for('');
+        Psr7\copy_to_stream($s1, $s2, 16394);
+        $s2->seek(0);
+        $this->assertEquals(16394, strlen($s2->getContents()));
+        $this->assertEquals(8192, $sizes[0]);
+        $this->assertEquals(8192, $sizes[1]);
+        $this->assertEquals(10, $sizes[2]);
+    }
+
     public function testStopsCopyToSteamWhenReadFailsWithMaxLen()
     {
         $s1 = Psr7\stream_for('foobaz');

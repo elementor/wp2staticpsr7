@@ -380,17 +380,17 @@ function copy_to_stream(
         return;
     }
 
-    $bytes = 0;
-    while (!$source->eof()) {
-        $buf = $source->read($maxLen - $bytes);
-        if (!($len = strlen($buf))) {
+    $bufferSize = 8192;
+    $remaining = $maxLen;
+
+    while ($remaining > 0 && !$source->eof()) {
+        $buf = $source->read(min($bufferSize, $remaining));
+        $len = strlen($buf);
+        if (!$len) {
             break;
         }
-        $bytes += $len;
+        $remaining -= $len;
         $dest->write($buf);
-        if ($bytes == $maxLen) {
-            break;
-        }
     }
 }
 
