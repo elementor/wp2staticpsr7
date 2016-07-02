@@ -198,50 +198,6 @@ class Uri implements UriInterface
     }
 
     /**
-     * Returns a normalized URI.
-     *
-     * The scheme and host component are already normalized to lowercase per PSR-7 UriInterface. This method adds the
-     * following additional normalizations:
-     * - removal of unnecessary dot-segments
-     * - empty path to "/" normalization for http and https URIs
-     *
-     * @param UriInterface $uri
-     *
-     * @return UriInterface The normalized URI
-     * @link https://tools.ietf.org/html/rfc3986#section-6.2.2 ff.
-     */
-    public static function normalize(UriInterface $uri)
-    {
-        // dot-segments in relative-path references cannot be removed safely
-        if (!self::isRelativePathReference($uri)) {
-            $uri = $uri->withPath(self::removeDotSegments($uri->getPath()));
-        } elseif ($uri->getPath() === '' && ($uri->getScheme() === 'http' || $uri->getScheme() === 'https')) {
-            $uri = $uri->withPath('/');
-        }
-
-        return $uri;
-    }
-
-    /**
-     * Whether two URIs can be considered equivalent.
-     *
-     * Both URIs are normalized automatically before comparison. The method also accepts relative URI references and
-     * returns true when they are equivalent. This of course assumes they will be resolved against the same base URI.
-     * If this is not the case, determination of equivalence or difference of relative references does not mean anything.
-     *
-     * @param UriInterface $uri1 An URI to compare
-     * @param UriInterface $uri2 An URI to compare
-     *
-     * @return UriInterface The normalized URI
-     * @see Uri::normalize
-     * @link https://tools.ietf.org/html/rfc3986#section-6.1
-     */
-    public static function isEquivalent(UriInterface $uri1, UriInterface $uri2)
-    {
-        return (string) self::normalize($uri1) === (string) self::normalize($uri2);
-    }
-
-    /**
      * Removes dot segments from a path and returns the new path.
      *
      * @param string $path
