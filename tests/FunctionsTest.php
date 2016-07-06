@@ -638,3 +638,10 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($r2 instanceof \Psr\Http\Message\ServerRequestInterface);
     }
 }
+
+class HasToString
+{
+    public function __toString() {
+        return 'foo';
+    }
+}
