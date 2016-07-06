@@ -79,7 +79,10 @@ final class UriNormalizer
      * However, the order of parameters in a URI may be significant (this is not defined by the standard).
      * So this normalization is not safe and may change the semantics of the URI.
      *
-     * Example: ?lang=en&article=fred → ?article=fred&lang=en
+     * Example: ?lang=en&article=fred → ?article=fred&lang=en4
+     *
+     * Note: The sorting is neither locale nor Unicode aware (the URI query does not get decoded at all) as the
+     * purpose is to be able to compare URIs in a reproducible way, not to have the params sorted perfectly.
      */
     const SORT_QUERY_PARAMETERS = 64;
 
@@ -116,15 +119,17 @@ final class UriNormalizer
         }
 
         if ($flags & self::REMOVE_DOT_SEGMENTS && !Uri::isRelativePathReference($uri)) {
-            $uri = $uri->withPath(Uri::removeDotSegments($uri->getPath()));
+            $uri = $uri->withPath(UriResolver::removeDotSegments($uri->getPath()));
         }
 
         if ($flags & self::REMOVE_DUPLICATE_SLASHES) {
             $uri = $uri->withPath(preg_replace('#//++#', '/', $uri->getPath()));
         }
 
-        if ($flags & self::SORT_QUERY_PARAMETERS) {
-            $uri = $uri->withQuery();
+        if ($flags & self::SORT_QUERY_PARAMETERS && $uri->getQuery() !== '') {
+            $queryKeyValues = explode('&', $uri->getQuery());
+            sort($queryKeyValues);
+            $uri = $uri->withQuery(implode('&', $queryKeyValues));
         }
 
         return $uri;
