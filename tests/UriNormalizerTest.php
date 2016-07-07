@@ -9,6 +9,48 @@ use GuzzleHttp\Psr7\UriNormalizer;
  */
 class UriNormalizerTest extends \PHPUnit_Framework_TestCase
 {
+    public function testCapitalizePercentEncoding()
+    {
+        $actualEncoding = 'a%c2%7A%5eb%25%fa%fA%Fa';
+        $expectEncoding = 'a%C2%7A%5Eb%25%FA%FA%FA';
+        $uri = (new Uri())->withPath("/$actualEncoding")->withQuery($actualEncoding);
+
+        $this->assertSame("/$actualEncoding?$actualEncoding", (string) $uri, 'Not normalized automatically beforehand');
+
+        $normalizedUri = UriNormalizer::normalize($uri, UriNormalizer::CAPITALIZE_PERCENT_ENCODING);
+
+        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $normalizedUri);
+        $this->assertSame("/$expectEncoding?$expectEncoding", (string) $normalizedUri);
+    }
+
+    /**
+     * @dataProvider getUnreservedCharacters
+     */
+    public function testDecodeUnreservedCharacters($char)
+    {
+        $percentEncoded = '%'.bin2hex($char);
+        // Add encoded reserved characters to test that those are not decoded and include the percent-encoded
+        // unreserved character both in lower and upper case to test the decoding is case-insensitive.
+        $encodedChars = $percentEncoded.'%2F%5B'.strtoupper($percentEncoded);
+        $uri = (new Uri())->withPath("/$encodedChars")->withQuery($encodedChars);
+
+        $this->assertSame("/$encodedChars?$encodedChars", (string) $uri, 'Not normalized automatically beforehand');
+
+        $normalizedUri = UriNormalizer::normalize($uri, UriNormalizer::DECODE_UNRESERVED_CHARACTERS);
+
+        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $normalizedUri);
+        $this->assertSame("/$char%2F%5B$char?$char%2F%5B$char", (string) $normalizedUri);
+    }
+
+    public function getUnreservedCharacters()
+    {
+        $unreservedChars = array_merge(range('a', 'z'), range('A', 'Z'), range('0', '9'), ['-', '.', '_', '~']);
+
+        return array_map(function ($char) {
+            return [$char];
+        }, $unreservedChars);
+    }
+
     /**
      * @dataProvider getEmptyPathTestCases
      */

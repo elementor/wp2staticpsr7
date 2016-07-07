@@ -101,11 +101,11 @@ final class UriNormalizer
     public static function normalize(UriInterface $uri, $flags = self::PRESERVING_NORMALIZATIONS)
     {
         if ($flags & self::CAPITALIZE_PERCENT_ENCODING) {
-            $uri = $uri->withPath();
+            $uri = self::capitalizePercentEncoding($uri);
         }
 
         if ($flags & self::DECODE_UNRESERVED_CHARACTERS) {
-            $uri = $uri->withPath();
+            $uri = self::decodeUnreservedCharacters($uri);
         }
 
         if ($flags & self::REPLACE_EMPTY_PATH && $uri->getPath() === '' &&
@@ -153,6 +153,38 @@ final class UriNormalizer
     public static function isEquivalent(UriInterface $uri1, UriInterface $uri2, $normalizations = self::PRESERVING_NORMALIZATIONS)
     {
         return (string) self::normalize($uri1, $normalizations) === (string) self::normalize($uri2, $normalizations);
+    }
+
+    private static function capitalizePercentEncoding(UriInterface $uri)
+    {
+        $regex = '/(?:%[A-Fa-f0-9]{2})++/';
+
+        $callback = function (array $match) {
+            return strtoupper($match[0]);
+        };
+
+        return
+            $uri->withPath(
+                preg_replace_callback($regex, $callback, $uri->getPath())
+            )->withQuery(
+                preg_replace_callback($regex, $callback, $uri->getQuery())
+            );
+    }
+
+    private static function decodeUnreservedCharacters(UriInterface $uri)
+    {
+        $regex = '/%(?:2D|2E|5F|7E|3[0-9]|[46][1-9A-F]|[57][0-9A])/i';
+
+        $callback = function (array $match) {
+            return rawurldecode($match[0]);
+        };
+
+        return
+            $uri->withPath(
+                preg_replace_callback($regex, $callback, $uri->getPath())
+            )->withQuery(
+                preg_replace_callback($regex, $callback, $uri->getQuery())
+            );
     }
 
     private function __construct()
