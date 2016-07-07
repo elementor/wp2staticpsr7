@@ -54,9 +54,9 @@ class UriNormalizerTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getEmptyPathTestCases
      */
-    public function testReplaceEmptyPath($uri, $expected)
+    public function testConvertEmptyPath($uri, $expected)
     {
-        $normalizedUri = UriNormalizer::normalize(new Uri($uri), UriNormalizer::REPLACE_EMPTY_PATH);
+        $normalizedUri = UriNormalizer::normalize(new Uri($uri), UriNormalizer::CONVERT_EMPTY_PATH);
 
         $this->assertInstanceOf('Psr\Http\Message\UriInterface', $normalizedUri);
         $this->assertSame($expected, (string) $normalizedUri);

@@ -15,7 +15,7 @@ final class UriNormalizer
     /**
      * Default normalizations which only include the ones that preserve semantics.
      *
-     * self::CAPITALIZE_PERCENT_ENCODING | self::DECODE_UNRESERVED_CHARACTERS | self::REPLACE_EMPTY_PATH |
+     * self::CAPITALIZE_PERCENT_ENCODING | self::DECODE_UNRESERVED_CHARACTERS | self::CONVERT_EMPTY_PATH |
      * self::REMOVE_DEFAULT_PORT | self::REMOVE_DOT_SEGMENTS
      */
     const PRESERVING_NORMALIZATIONS = 31;
@@ -43,7 +43,7 @@ final class UriNormalizer
      *
      * Example: http://example.org → http://example.org/
      */
-    const REPLACE_EMPTY_PATH = 4;
+    const CONVERT_EMPTY_PATH = 4;
 
     /**
      * Removes the default port of the given URI scheme from the URI.
@@ -108,7 +108,7 @@ final class UriNormalizer
             $uri = self::decodeUnreservedCharacters($uri);
         }
 
-        if ($flags & self::REPLACE_EMPTY_PATH && $uri->getPath() === '' &&
+        if ($flags & self::CONVERT_EMPTY_PATH && $uri->getPath() === '' &&
             ($uri->getScheme() === 'http' || $uri->getScheme() === 'https')
         ) {
             $uri = $uri->withPath('/');
