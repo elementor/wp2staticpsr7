@@ -124,8 +124,8 @@ final class UriResolver
      *    echo Uri::relativize($base, new Uri('http://example.com/a/b/?q')); // prints '?q'.
      *    echo Uri::relativize($base, new Uri('http://example.org/a/b/'));   // prints '//example.org/a/b/'.
      *
-     * This method also accepts a target that is already relative. A relative-path reference will be returned as-is
-     * and not be relativized further.
+     * This method also accepts a target that is already relative and will try to relativize it further. Only a
+     * relative-path reference will be returned as-is.
      *
      *    echo Uri::relativize($base, new Uri('/a/b/c'));  // prints 'c' as well
      *
@@ -136,7 +136,9 @@ final class UriResolver
      */
     public static function relativize(UriInterface $base, UriInterface $target)
     {
-        if ($base->getScheme() !== $target->getScheme() && $target->getScheme() !== '') {
+        if ($target->getScheme() !== '' &&
+            ($base->getScheme() !== $target->getScheme() || $target->getAuthority() === '' && $base->getAuthority() !== '')
+        ) {
             return $target;
         }
 
@@ -147,7 +149,7 @@ final class UriResolver
             return $target;
         }
 
-        if ($base->getAuthority() !== $target->getAuthority() && $target->getAuthority() !== '') {
+        if ($target->getAuthority() !== '' && $base->getAuthority() !== $target->getAuthority()) {
             return $target->withScheme('');
         }
 

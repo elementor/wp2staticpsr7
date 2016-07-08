@@ -196,6 +196,8 @@ class UriResolverTest extends \PHPUnit_Framework_TestCase
             ['http://a/b/',     '/b/c',         'c'],
             ['http://a/b/',     '/x/y',         '../x/y'],
             ['http://a/b/',     '/',            '../'],
+            // absolute target URI without authority but base URI has one
+            ['urn://a/b/',      'urn:/b/',      'urn:/b/'],
         ];
     }
 }
