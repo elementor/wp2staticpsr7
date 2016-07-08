@@ -434,12 +434,42 @@ class UriTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('http://example.com', (string) $uri);
     }
 
-    public function testAuthorityWithUserInfoButWithoutHost()
+    /**
+     * In RFC 8986 the host is optional and the authority can only
+     * consist of the user info and port.
+     */
+    public function testAuthorityWithUserInfoOrPortButWithoutHost()
     {
         $uri = (new Uri())->withUserInfo('user', 'pass');
 
         $this->assertSame('user:pass', $uri->getUserInfo());
-        $this->assertSame('', $uri->getAuthority());
+        $this->assertSame('user:pass@', $uri->getAuthority());
+
+        $uri = $uri->withPort(8080);
+        $this->assertSame(8080, $uri->getPort());
+        $this->assertSame('user:pass@:8080', $uri->getAuthority());
+        $this->assertSame('//user:pass@:8080', (string) $uri);
+
+        $uri = $uri->withUserInfo('');
+        $this->assertSame(':8080', $uri->getAuthority());
+    }
+
+    public function testHostInHttpUriDefaultsToLocalhost()
+    {
+        $uri = (new Uri())->withScheme('http');
+
+        $this->assertSame('localhost', $uri->getHost());
+        $this->assertSame('localhost', $uri->getAuthority());
+        $this->assertSame('http://localhost', (string) $uri);
+    }
+
+    public function testHostInHttpsUriDefaultsToLocalhost()
+    {
+        $uri = (new Uri())->withScheme('https');
+
+        $this->assertSame('localhost', $uri->getHost());
+        $this->assertSame('localhost', $uri->getAuthority());
+        $this->assertSame('https://localhost', (string) $uri);
     }
 
     public function uriComponentsEncodingProvider()
@@ -509,24 +539,53 @@ class UriTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('foo', (string) $uri);
     }
 
-    public function testAddsSlashForRelativeUriStringWithHost()
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage The path of a URI with an authority must start with a slash "/" or be empty
+     */
+    public function testRelativePathAndAuhorityIsInvalid()
     {
-        // If the path is rootless and an authority is present, the path MUST
-        // be prefixed by "/".
-        $uri = (new Uri)->withPath('foo')->withHost('example.com');
-        $this->assertSame('foo', $uri->getPath());
         // concatenating a relative path with a host doesn't work: "//example.comfoo" would be wrong
-        $this->assertSame('//example.com/foo', (string) $uri);
+        (new Uri)->withPath('foo')->withHost('example.com');
     }
 
-    public function testRemoveExtraSlashesWihoutHost()
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage The path of a URI without an authority must not start with two slashes "//"
+     */
+    public function testPathStartingWithTwoSlashesAndNoAuthorityIsInvalid()
     {
-        // If the path is starting with more than one "/" and no authority is
-        // present, the starting slashes MUST be reduced to one.
-        $uri = (new Uri)->withPath('//foo');
-        $this->assertSame('//foo', $uri->getPath());
         // URI "//foo" would be interpreted as network reference and thus change the original path to the host
-        $this->assertSame('/foo', (string) $uri);
+        (new Uri)->withPath('//foo');
+    }
+
+    public function testPathStartingWithTwoSlashes()
+    {
+        $uri = new Uri('http://example.org//path-not-host.com');
+        $this->assertSame('//path-not-host.com', $uri->getPath());
+
+        $uri = $uri->withScheme('');
+        $this->assertSame('//example.org//path-not-host.com', (string) $uri); // This is still valid
+        $this->setExpectedException('\InvalidArgumentException');
+        $uri->withHost(''); // Now it becomes invalid
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage A relative URI must not have a path beginning with a segment containing a colon
+     */
+    public function testRelativeUriWithPathBeginngWithColonSegmentIsInvalid()
+    {
+        (new Uri)->withPath('mailto:foo');
+    }
+
+    public function testRelativeUriWithPathHavingColonSegment()
+    {
+        $uri = (new Uri('urn:/mailto:foo'))->withScheme('');
+        $this->assertSame('/mailto:foo', $uri->getPath());
+
+        $this->setExpectedException('\InvalidArgumentException');
+        (new Uri('urn:mailto:foo'))->withScheme('');
     }
 
     public function testDefaultReturnValuesOfGetters()
@@ -559,15 +618,15 @@ class UriTest extends \PHPUnit_Framework_TestCase
     public function testExtendingClassesInstantiates()
     {
         // The non-standard port triggers a cascade of private methods which
-        //  should not use late static binding to access private static members.
+        // should not use late static binding to access private static members.
         // If they do, this will fatal.
         $this->assertInstanceOf(
-            '\GuzzleHttp\Tests\Psr7\ExtendingClassTest',
-            new ExtendingClassTest('http://h:9/')
+            'GuzzleHttp\Tests\Psr7\ExtendedUriTest',
+            new ExtendedUriTest('http://h:9/')
         );
     }
 }
 
-class ExtendingClassTest extends \GuzzleHttp\Psr7\Uri
+class ExtendedUriTest extends Uri
 {
 }

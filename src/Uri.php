@@ -12,6 +12,14 @@ use Psr\Http\Message\UriInterface;
  */
 class Uri implements UriInterface
 {
+    /**
+     * Absolute http and https URIs require a host per RFC 7230 Section 2.7
+     * but in generic URIs the host can be empty. So for http(s) URIs
+     * we apply this default host when no host is given yet to form a
+     * valid URI.
+     */
+    const HTTP_DEFAULT_HOST = 'localhost';
+
     private static $schemes = [
         'http'  => 80,
         'https' => 443,
@@ -241,16 +249,20 @@ class Uri implements UriInterface
     }
 
     /**
-     * Create a URI from a hash of parse_url parts.
+     * Create a URI from a hash of parse_url components.
      *
      * @param array $parts
      *
      * @return self
+     *
+     * @throws \InvalidArgumentException If the components do not form a valid URI.
      */
     public static function fromParts(array $parts)
     {
         $uri = new self();
         $uri->applyParts($parts);
+        $uri->validateState();
+
         return $uri;
     }
 
@@ -261,10 +273,6 @@ class Uri implements UriInterface
 
     public function getAuthority()
     {
-        if ($this->host == '') {
-            return '';
-        }
-
         $authority = $this->host;
         if ($this->userInfo != '') {
             $authority = $this->userInfo . '@' . $authority;
@@ -318,6 +326,8 @@ class Uri implements UriInterface
         $new = clone $this;
         $new->scheme = $scheme;
         $new->port = $new->filterPort($new->port);
+        $new->validateState();
+
         return $new;
     }
 
@@ -334,6 +344,8 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->userInfo = $info;
+        $new->validateState();
+
         return $new;
     }
 
@@ -347,6 +359,8 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->host = $host;
+        $new->validateState();
+
         return $new;
     }
 
@@ -360,6 +374,8 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->port = $port;
+        $new->validateState();
+
         return $new;
     }
 
@@ -373,6 +389,8 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->path = $path;
+        $new->validateState();
+
         return $new;
     }
 
@@ -386,6 +404,7 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->query = $query;
+
         return $new;
     }
 
@@ -399,6 +418,7 @@ class Uri implements UriInterface
 
         $new = clone $this;
         $new->fragment = $fragment;
+
         return $new;
     }
 
@@ -455,22 +475,7 @@ class Uri implements UriInterface
             $uri .= '//' . $authority;
         }
 
-        if ($path != '') {
-            if ($path[0] !== '/') {
-                if ($authority != '') {
-                    // If the path is rootless and an authority is present, the path MUST be prefixed by "/"
-                    $path = '/' . $path;
-                }
-            } elseif (isset($path[1]) && $path[1] === '/') {
-                if ($authority == '') {
-                    // If the path is starting with more than one "/" and no authority is present, the
-                    // starting slashes MUST be reduced to one.
-                    $path = '/' . ltrim($path, '/');
-                }
-            }
-
-            $uri .= $path;
-        }
+        $uri .= $path;
 
         if ($query != '') {
             $uri .= '?' . $query;
@@ -598,5 +603,23 @@ class Uri implements UriInterface
     private function rawurlencodeMatchZero(array $match)
     {
         return rawurlencode($match[0]);
+    }
+
+    private function validateState()
+    {
+        if ($this->host === '' && ($this->scheme === 'http' || $this->scheme === 'https')) {
+            $this->host = self::HTTP_DEFAULT_HOST;
+        }
+
+        if ($this->getAuthority() === '') {
+            if (0 === strpos($this->path, '//')) {
+                throw new \InvalidArgumentException('The path of a URI without an authority must not start with two slashes "//"');
+            }
+            if ($this->scheme === '' && false !== strpos(explode('/', $this->path, 2)[0], ':')) {
+                throw new \InvalidArgumentException('A relative URI must not have a path beginning with a segment containing a colon');
+            }
+        } elseif (isset($this->path[0]) && $this->path[0] !== '/') {
+            throw new \InvalidArgumentException('The path of a URI with an authority must start with a slash "/" or be empty');
+        }
     }
 }
