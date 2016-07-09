@@ -137,4 +137,28 @@ class UriNormalizerTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('Psr\Http\Message\UriInterface', $normalizedUri);
         $this->assertSame('?a&a=a&a=b&a=c&a=d&b=a&b=b&b=c', (string) $normalizedUri);
     }
+
+    /**
+     * @dataProvider getEquivalentTestCases
+     */
+    public function testIsEquivalent($uri1, $uri2, $expected)
+    {
+        $equivalent = UriNormalizer::isEquivalent(new Uri($uri1), new Uri($uri2));
+
+        $this->assertSame($expected, $equivalent);
+    }
+
+    public function getEquivalentTestCases()
+    {
+        return [
+            ['http://example.org', 'http://example.org', true],
+            ['hTTp://eXaMpLe.org', 'http://example.org', true],
+            ['http://example.org/path?#', 'http://example.org/path', true],
+            ['http://example.org:80', 'http://example.org/', true],
+            ['http://example.org/../a/.././p%61th?%7a=%5e', 'http://example.org/path?z=%5E', true],
+            ['https://example.org/', 'http://example.org/', false],
+            ['https://example.org/', '//example.org/', false],
+            ['//example.org/', '//example.org/', true],
+        ];
+    }
 }
