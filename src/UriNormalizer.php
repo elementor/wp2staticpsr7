@@ -65,7 +65,7 @@ final class UriNormalizer
     /**
      * Paths which include two or more adjacent slashes are converted to one.
      *
-     * Webservers usually ignore duplicate slashes and treat those URIS equivalent.
+     * Webservers usually ignore duplicate slashes and treat those URIs equivalent.
      * But in theory those URIs do not need to be equivalent. So this normalization
      * may change the semantics. Encoded slashes (%2F) are not removed.
      *

@@ -86,7 +86,10 @@ class Uri implements UriInterface
     }
 
     /**
-     * Compose a URI reference string from its various components.
+     * Composes a URI reference string from its various components.
+     *
+     * Usually this method does not need to be called manually but instead is used indirectly via
+     * `Psr\Http\Message\UriInterface::__toString`.
      *
      * PSR-7 UriInterface treats an empty component the same as a missing component as
      * getQuery(), getFragment() etc. always return a string. This explains the slight
@@ -131,6 +134,9 @@ class Uri implements UriInterface
     /**
      * Whether the URI has the default port of the current scheme.
      *
+     * `Psr\Http\Message\UriInterface::getPort` may return null or the standard port. This method can be used
+     * independently of the implementation.
+     *
      * @param UriInterface $uri
      *
      * @return bool
@@ -157,7 +163,7 @@ class Uri implements UriInterface
      * @see Uri::isNetworkPathReference
      * @see Uri::isAbsolutePathReference
      * @see Uri::isRelativePathReference
-     * @link https://tools.ietf.org/html/rfc3986#section-4.2
+     * @link https://tools.ietf.org/html/rfc3986#section-4
      */
     public static function isAbsolute(UriInterface $uri)
     {
@@ -277,7 +283,7 @@ class Uri implements UriInterface
     }
 
     /**
-     * Create a new URI with a specific query string value removed.
+     * Creates a new URI with a specific query string value removed.
      *
      * Any existing query string values that exactly match the provided key are
      * removed.
@@ -303,7 +309,7 @@ class Uri implements UriInterface
     }
 
     /**
-     * Create a new URI with a specific query string value.
+     * Creates a new URI with a specific query string value.
      *
      * Any existing query string values that exactly match the provided key are
      * removed and replaced with the given key value pair.
@@ -345,11 +351,12 @@ class Uri implements UriInterface
     }
 
     /**
-     * Create a URI from a hash of parse_url components.
+     * Creates a URI from a hash of `parse_url` components.
      *
      * @param array $parts
      *
-     * @return self
+     * @return UriInterface
+     * @link http://php.net/manual/en/function.parse-url.php
      *
      * @throws \InvalidArgumentException If the components do not form a valid URI.
      */
