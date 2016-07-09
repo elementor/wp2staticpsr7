@@ -64,6 +64,7 @@ class Uri implements UriInterface
      */
     public function __construct($uri = '')
     {
+        // weak type check to also accept null until we can add scalar type hints
         if ($uri != '') {
             $parts = parse_url($uri);
             if ($parts === false) {
@@ -82,6 +83,49 @@ class Uri implements UriInterface
             $this->query,
             $this->fragment
         );
+    }
+
+    /**
+     * Compose a URI reference string from its various components.
+     *
+     * PSR-7 UriInterface treats an empty component the same as a missing component as
+     * getQuery(), getFragment() etc. always return a string. This explains the slight
+     * difference to RFC 3986 Section 5.3.
+     *
+     * @param string $scheme
+     * @param string $authority
+     * @param string $path
+     * @param string $query
+     * @param string $fragment
+     *
+     * @return string
+     *
+     * @link https://tools.ietf.org/html/rfc3986#section-5.3
+     */
+    public static function composeComponents($scheme, $authority, $path, $query, $fragment)
+    {
+        $uri = '';
+
+        // weak type checks to also accept null until we can add scalar type hints
+        if ($scheme != '') {
+            $uri .= $scheme . ':';
+        }
+
+        if ($authority != ''|| $scheme === 'file') {
+            $uri .= '//' . $authority;
+        }
+
+        $uri .= $path;
+
+        if ($query != '') {
+            $uri .= '?' . $query;
+        }
+
+        if ($fragment != '') {
+            $uri .= '#' . $fragment;
+        }
+
+        return $uri;
     }
 
     /**
@@ -246,7 +290,7 @@ class Uri implements UriInterface
     public static function withoutQueryValue(UriInterface $uri, $key)
     {
         $current = $uri->getQuery();
-        if ($current == '') {
+        if ($current === '') {
             return $uri;
         }
 
@@ -277,7 +321,7 @@ class Uri implements UriInterface
     {
         $current = $uri->getQuery();
 
-        if ($current == '') {
+        if ($current === '') {
             $result = [];
         } else {
             $decodedKey = rawurldecode($key);
@@ -326,7 +370,7 @@ class Uri implements UriInterface
     public function getAuthority()
     {
         $authority = $this->host;
-        if ($this->userInfo != '') {
+        if ($this->userInfo !== '') {
             $authority = $this->userInfo . '@' . $authority;
         }
 
@@ -509,44 +553,6 @@ class Uri implements UriInterface
     }
 
     /**
-     * Compose a URI reference string from its various components.
-     *
-     * @param string $scheme
-     * @param string $authority
-     * @param string $path
-     * @param string $query
-     * @param string $fragment
-     *
-     * @return string
-     *
-     * @link https://tools.ietf.org/html/rfc3986#section-5.3
-     */
-    public static function composeComponents($scheme, $authority, $path, $query, $fragment)
-    {
-        $uri = '';
-
-        if ($scheme != '') {
-            $uri .= $scheme . ':';
-        }
-
-        if ($authority != '' || $scheme === 'file') {
-            $uri .= '//' . $authority;
-        }
-
-        $uri .= $path;
-
-        if ($query != '') {
-            $uri .= '?' . $query;
-        }
-
-        if ($fragment != '') {
-            $uri .= '#' . $fragment;
-        }
-
-        return $uri;
-    }
-
-    /**
      * @param string $scheme
      *
      * @return string
@@ -603,7 +609,7 @@ class Uri implements UriInterface
 
     private function removeDefaultPort()
     {
-        if (self::isDefaultPort($this)) {
+        if ($this->port !== null && self::isDefaultPort($this)) {
             $this->port = null;
         }
     }

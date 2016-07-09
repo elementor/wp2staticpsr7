@@ -92,6 +92,11 @@ final class UriNormalizer
      * The scheme and host component are already normalized to lowercase per PSR-7 UriInterface.
      * This methods adds additional normalizations that can be configured with the $flags parameter.
      *
+     * PSR-7 UriInterface cannot distinguish between an empty component and a missing component as
+     * getQuery(), getFragment() etc. always return a string. This means the URIs "/?#" and "/" are
+     * treated equivalent which is not necessarily true according to RFC 3986. But that difference
+     * is highly uncommon in reality. So this potential normalization is implied in PSR-7 as well.
+     *
      * @param UriInterface $uri   The URI to normalize
      * @param int          $flags A bitmask of normalizations to apply, see constants
      *
