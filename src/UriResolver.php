@@ -155,7 +155,7 @@ final class UriResolver
 
         // We must remove the path before removing the authority because if the path starts with two slashes, the URI
         // would turn invalid. And we also cannot set a relative path before removing the authority, as that is also
-        // invalid. See validateState().
+        // invalid.
         $emptyPathUri = $target->withScheme('')->withPath('')->withUserInfo('')->withPort(null)->withHost('');
 
         if ($base->getPath() !== $target->getPath()) {
@@ -172,11 +172,8 @@ final class UriResolver
         if ($target->getQuery() === '') {
             $segments = explode('/', $target->getPath());
             $lastSegment = end($segments);
-            if ($lastSegment === '') {
-                return $emptyPathUri->withPath('./');
-            }
 
-            return $emptyPathUri->withPath($lastSegment);
+            return $emptyPathUri->withPath($lastSegment === '' ? './' : $lastSegment);
         }
 
         return $emptyPathUri;
