@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests\Psr7;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\NoSeekStream;
+use Psr\Http\Message\ServerRequestInterface;
 
 class FunctionsTest extends \PHPUnit_Framework_TestCase
 {
@@ -94,13 +95,13 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $s = Psr7\stream_for("foo\nbaz\nbar");
         $this->assertEquals("foo\n", Psr7\readline($s));
         $this->assertEquals("baz\n", Psr7\readline($s));
-        $this->assertEquals("bar", Psr7\readline($s));
+        $this->assertEquals('bar', Psr7\readline($s));
     }
 
     public function testReadsLinesUpToMaxLength()
     {
         $s = Psr7\stream_for("12345\n");
-        $this->assertEquals("123", Psr7\readline($s, 4));
+        $this->assertEquals('123', Psr7\readline($s, 4));
         $this->assertEquals("45\n", Psr7\readline($s));
     }
 
@@ -123,7 +124,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $s->expects($this->exactly(2))
             ->method('eof')
             ->will($this->returnValue(false));
-        $this->assertEquals("h", Psr7\readline($s));
+        $this->assertEquals('h', Psr7\readline($s));
     }
 
     public function testCalculatesHash()
@@ -224,7 +225,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider parseQueryProvider
      */
-    public function testParsesAndBuildsQueries($input, $output)
+    public function testParsesAndBuildsQueries($input)
     {
         $result = Psr7\parse_query($input, false);
         $this->assertSame($input, Psr7\build_query($result, false));
@@ -545,7 +546,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $res = new Psr7\Response(200, [], $body);
         Psr7\rewind_body($res);
         $this->assertEquals(0, $body->tell());
-        $body->rewind(1);
+        $body->rewind();
         Psr7\rewind_body($res);
         $this->assertEquals(0, $body->tell());
     }
@@ -600,7 +601,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
         $r1 = new Psr7\ServerRequest('GET', 'http://foo.com');
         $r2 = Psr7\modify_request($r1, []);
-        $this->assertTrue($r2 instanceof \Psr\Http\Message\ServerRequestInterface);
+        $this->assertTrue($r2 instanceof ServerRequestInterface);
     }
 
     public function testReturnsUriAsIsWhenNoChanges()
@@ -635,7 +636,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
         $r1 = new Psr7\ServerRequest('GET', 'http://foo.com');
         $r2 = Psr7\modify_request($r1, ['remove_headers' => ['non-existent']]);
-        $this->assertTrue($r2 instanceof \Psr\Http\Message\ServerRequestInterface);
+        $this->assertTrue($r2 instanceof ServerRequestInterface);
     }
 }
 
