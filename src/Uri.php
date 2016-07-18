@@ -471,7 +471,7 @@ class Uri implements UriInterface
             $uri .= $scheme . ':';
         }
 
-        if ($authority != '') {
+        if ($authority != '' || $scheme == 'file') {
             $uri .= '//' . $authority;
         }
 

@@ -472,6 +472,15 @@ class UriTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('https://localhost', (string) $uri);
     }
 
+    public function testFileSchemeWithEmptyHost()
+    {
+        $uri = (new Uri())->withScheme('file');
+
+        $this->assertSame('', $uri->getHost());
+        $this->assertSame('', $uri->getAuthority());
+        $this->assertSame('file://', (string) $uri);
+    }
+
     public function uriComponentsEncodingProvider()
     {
         $unreserved = 'a-zA-Z0-9.-_~!$&\'()*+,;=:@';
