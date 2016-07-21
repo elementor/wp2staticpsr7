@@ -8,8 +8,6 @@ use GuzzleHttp\Psr7\Uri;
  */
 class UriTest extends \PHPUnit_Framework_TestCase
 {
-    const RFC3986_BASE = 'http://a/b/c/d;p?q';
-
     public function testParsesProvidedUri()
     {
         $uri = new Uri('https://user:pass@example.com:8080/path/123?q=abc#test');
@@ -219,74 +217,97 @@ class UriTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider getResolveTestCases
+     * @dataProvider getPortTestCases
      */
-    public function testResolvesUris($base, $rel, $expected)
+    public function testIsDefaultPort($scheme, $port, $isDefaultPort)
     {
-        $uri = new Uri($base);
-        $actual = Uri::resolve($uri, $rel);
-        $this->assertSame($expected, (string) $actual);
+        $uri = $this->getMock('Psr\Http\Message\UriInterface');
+        $uri->expects($this->any())->method('getScheme')->will($this->returnValue($scheme));
+        $uri->expects($this->any())->method('getPort')->will($this->returnValue($port));
+
+        $this->assertSame($isDefaultPort, Uri::isDefaultPort($uri));
     }
 
-    public function getResolveTestCases()
+    public function getPortTestCases()
     {
         return [
-            [self::RFC3986_BASE, 'g:h',           'g:h'],
-            [self::RFC3986_BASE, 'g',             'http://a/b/c/g'],
-            [self::RFC3986_BASE, './g',           'http://a/b/c/g'],
-            [self::RFC3986_BASE, 'g/',            'http://a/b/c/g/'],
-            [self::RFC3986_BASE, '/g',            'http://a/g'],
-            [self::RFC3986_BASE, '//g',           'http://g'],
-            [self::RFC3986_BASE, '?y',            'http://a/b/c/d;p?y'],
-            [self::RFC3986_BASE, 'g?y',           'http://a/b/c/g?y'],
-            [self::RFC3986_BASE, '#s',            'http://a/b/c/d;p?q#s'],
-            [self::RFC3986_BASE, 'g#s',           'http://a/b/c/g#s'],
-            [self::RFC3986_BASE, 'g?y#s',         'http://a/b/c/g?y#s'],
-            [self::RFC3986_BASE, ';x',            'http://a/b/c/;x'],
-            [self::RFC3986_BASE, 'g;x',           'http://a/b/c/g;x'],
-            [self::RFC3986_BASE, 'g;x?y#s',       'http://a/b/c/g;x?y#s'],
-            [self::RFC3986_BASE, '',              self::RFC3986_BASE],
-            [self::RFC3986_BASE, '.',             'http://a/b/c/'],
-            [self::RFC3986_BASE, './',            'http://a/b/c/'],
-            [self::RFC3986_BASE, '..',            'http://a/b/'],
-            [self::RFC3986_BASE, '../',           'http://a/b/'],
-            [self::RFC3986_BASE, '../g',          'http://a/b/g'],
-            [self::RFC3986_BASE, '../..',         'http://a/'],
-            [self::RFC3986_BASE, '../../',        'http://a/'],
-            [self::RFC3986_BASE, '../../g',       'http://a/g'],
-            [self::RFC3986_BASE, '../../../g',    'http://a/g'],
-            [self::RFC3986_BASE, '../../../../g', 'http://a/g'],
-            [self::RFC3986_BASE, '/./g',          'http://a/g'],
-            [self::RFC3986_BASE, '/../g',         'http://a/g'],
-            [self::RFC3986_BASE, 'g.',            'http://a/b/c/g.'],
-            [self::RFC3986_BASE, '.g',            'http://a/b/c/.g'],
-            [self::RFC3986_BASE, 'g..',           'http://a/b/c/g..'],
-            [self::RFC3986_BASE, '..g',           'http://a/b/c/..g'],
-            [self::RFC3986_BASE, './../g',        'http://a/b/g'],
-            [self::RFC3986_BASE, 'foo////g',      'http://a/b/c/foo////g'],
-            [self::RFC3986_BASE, './g/.',         'http://a/b/c/g/'],
-            [self::RFC3986_BASE, 'g/./h',         'http://a/b/c/g/h'],
-            [self::RFC3986_BASE, 'g/../h',        'http://a/b/c/h'],
-            [self::RFC3986_BASE, 'g;x=1/./y',     'http://a/b/c/g;x=1/y'],
-            [self::RFC3986_BASE, 'g;x=1/../y',    'http://a/b/c/y'],
-            // dot-segments in the query or fragment
-            [self::RFC3986_BASE, 'g?y/./x',       'http://a/b/c/g?y/./x'],
-            [self::RFC3986_BASE, 'g?y/../x',      'http://a/b/c/g?y/../x'],
-            [self::RFC3986_BASE, 'g#s/./x',       'http://a/b/c/g#s/./x'],
-            [self::RFC3986_BASE, 'g#s/../x',      'http://a/b/c/g#s/../x'],
-            [self::RFC3986_BASE, 'g#s/../x',      'http://a/b/c/g#s/../x'],
-            [self::RFC3986_BASE, '?y#s',          'http://a/b/c/d;p?y#s'],
-            ['http://a/b/c/d;p?q#s', '?y',        'http://a/b/c/d;p?y'],
-            ['http://u@a/b/c/d;p?q', '.',         'http://u@a/b/c/'],
-            ['http://u:p@a/b/c/d;p?q', '.',       'http://u:p@a/b/c/'],
-            ['http://a/b/c/d/', 'e',              'http://a/b/c/d/e'],
-            ['urn:no-slash', 'e',                 'urn:e'],
-            // falsey relative parts
-            [self::RFC3986_BASE, '//0',           'http://0'],
-            [self::RFC3986_BASE, '0',             'http://a/b/c/0'],
-            [self::RFC3986_BASE, '?0',            'http://a/b/c/d;p?0'],
-            [self::RFC3986_BASE, '#0',            'http://a/b/c/d;p?q#0'],
+            ['http', null, true],
+            ['http', 80, true],
+            ['http', 8080, false],
+            ['https', null, true],
+            ['https', 443, true],
+            ['https', 444, false],
+            ['ftp', 21, true],
+            ['gopher', 70, true],
+            ['nntp', 119, true],
+            ['news', 119, true],
+            ['telnet', 23, true],
+            ['tn3270', 23, true],
+            ['imap', 143, true],
+            ['pop', 110, true],
+            ['ldap', 389, true],
         ];
+    }
+
+    public function testIsAbsolute()
+    {
+        $this->assertTrue(Uri::isAbsolute(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isAbsolute(new Uri('//example.org')));
+        $this->assertFalse(Uri::isAbsolute(new Uri('/abs-path')));
+        $this->assertFalse(Uri::isAbsolute(new Uri('rel-path')));
+    }
+
+    public function testIsNetworkPathReference()
+    {
+        $this->assertFalse(Uri::isNetworkPathReference(new Uri('http://example.org')));
+        $this->assertTrue(Uri::isNetworkPathReference(new Uri('//example.org')));
+        $this->assertFalse(Uri::isNetworkPathReference(new Uri('/abs-path')));
+        $this->assertFalse(Uri::isNetworkPathReference(new Uri('rel-path')));
+    }
+
+    public function testIsAbsolutePathReference()
+    {
+        $this->assertFalse(Uri::isAbsolutePathReference(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isAbsolutePathReference(new Uri('//example.org')));
+        $this->assertTrue(Uri::isAbsolutePathReference(new Uri('/abs-path')));
+        $this->assertTrue(Uri::isAbsolutePathReference(new Uri('/')));
+        $this->assertFalse(Uri::isAbsolutePathReference(new Uri('rel-path')));
+    }
+
+    public function testIsRelativePathReference()
+    {
+        $this->assertFalse(Uri::isRelativePathReference(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isRelativePathReference(new Uri('//example.org')));
+        $this->assertFalse(Uri::isRelativePathReference(new Uri('/abs-path')));
+        $this->assertTrue(Uri::isRelativePathReference(new Uri('rel-path')));
+        $this->assertTrue(Uri::isRelativePathReference(new Uri('')));
+    }
+
+    public function testIsSameDocumentReference()
+    {
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.org')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('//example.org')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('/abs-path')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('rel-path')));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('?query')));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('')));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('#fragment')));
+
+        $baseUri = new Uri('http://example.org/path?foo=bar');
+
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('/path?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('path?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('//example.org/path?foo=bar#fragment'), $baseUri));
+        $this->assertTrue(Uri::isSameDocumentReference(new Uri('http://example.org/path?foo=bar#fragment'), $baseUri));
+
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('https://example.org/path?foo=bar'), $baseUri));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.com/path?foo=bar'), $baseUri));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.org/'), $baseUri));
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('http://example.org'), $baseUri));
+
+        $this->assertFalse(Uri::isSameDocumentReference(new Uri('urn:/path'), new Uri('urn://example.com/path')));
     }
 
     public function testAddAndRemoveQueryValues()
