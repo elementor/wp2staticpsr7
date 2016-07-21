@@ -16,9 +16,9 @@ final class UriNormalizer
      * Default normalizations which only include the ones that preserve semantics.
      *
      * self::CAPITALIZE_PERCENT_ENCODING | self::DECODE_UNRESERVED_CHARACTERS | self::CONVERT_EMPTY_PATH |
-     * self::REMOVE_DEFAULT_PORT | self::REMOVE_DOT_SEGMENTS
+     * self::REMOVE_DEFAULT_HOST | self::REMOVE_DEFAULT_PORT | self::REMOVE_DOT_SEGMENTS
      */
-    const PRESERVING_NORMALIZATIONS = 31;
+    const PRESERVING_NORMALIZATIONS = 63;
 
     /**
      * All letters within a percent-encoding triplet (e.g., "%3A") are case-insensitive, and should be capitalized.
@@ -46,11 +46,24 @@ final class UriNormalizer
     const CONVERT_EMPTY_PATH = 4;
 
     /**
+     * Removes the default host of the given URI scheme from the URI.
+     *
+     * Only the "file" scheme defines the default host "localhost".
+     * All of `file:/myfile`, `file:///myfile`, and `file://localhost/myfile`
+     * are equivalent according to RFC 3986. The first format is not accepted
+     * by PHPs stream functions and thus already normalized implicitly to the
+     * second format in the Uri class. See `GuzzleHttp\Psr7\Uri::composeComponents`.
+     *
+     * Example: file://localhost/myfile → file:///myfile
+     */
+    const REMOVE_DEFAULT_HOST = 8;
+
+    /**
      * Removes the default port of the given URI scheme from the URI.
      *
      * Example: http://example.org:80/ → http://example.org/
      */
-    const REMOVE_DEFAULT_PORT = 8;
+    const REMOVE_DEFAULT_PORT = 16;
 
     /**
      * Removes unnecessary dot-segments.
@@ -60,7 +73,7 @@ final class UriNormalizer
      *
      * Example: http://example.org/../a/b/../c/./d.html → http://example.org/a/c/d.html
      */
-    const REMOVE_DOT_SEGMENTS = 16;
+    const REMOVE_DOT_SEGMENTS = 32;
 
     /**
      * Paths which include two or more adjacent slashes are converted to one.
@@ -71,7 +84,7 @@ final class UriNormalizer
      *
      * Example: http://example.org//foo///bar.html → http://example.org/foo/bar.html
      */
-    const REMOVE_DUPLICATE_SLASHES = 32;
+    const REMOVE_DUPLICATE_SLASHES = 64;
 
     /**
      * Sort query parameters with their values in alphabetical order.
@@ -84,7 +97,7 @@ final class UriNormalizer
      * Note: The sorting is neither locale nor Unicode aware (the URI query does not get decoded at all) as the
      * purpose is to be able to compare URIs in a reproducible way, not to have the params sorted perfectly.
      */
-    const SORT_QUERY_PARAMETERS = 64;
+    const SORT_QUERY_PARAMETERS = 128;
 
     /**
      * Returns a normalized URI.
@@ -117,6 +130,10 @@ final class UriNormalizer
             ($uri->getScheme() === 'http' || $uri->getScheme() === 'https')
         ) {
             $uri = $uri->withPath('/');
+        }
+
+        if ($flags & self::REMOVE_DEFAULT_HOST && $uri->getScheme() === 'file' && $uri->getHost() === 'localhost') {
+            $uri = $uri->withHost('');
         }
 
         if ($flags & self::REMOVE_DEFAULT_PORT && $uri->getPort() !== null && Uri::isDefaultPort($uri)) {

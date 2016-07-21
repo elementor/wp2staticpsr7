@@ -71,6 +71,15 @@ class UriNormalizerTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
+    public function testRemoveDefaultHost()
+    {
+        $uri = new Uri('file://localhost/myfile');
+        $normalizedUri = UriNormalizer::normalize($uri, UriNormalizer::REMOVE_DEFAULT_HOST);
+
+        $this->assertInstanceOf('Psr\Http\Message\UriInterface', $normalizedUri);
+        $this->assertSame('file:///myfile', (string) $normalizedUri);
+    }
+
     public function testRemoveDefaultPort()
     {
         $uri = $this->getMock('Psr\Http\Message\UriInterface');
@@ -159,6 +168,8 @@ class UriNormalizerTest extends \PHPUnit_Framework_TestCase
             ['https://example.org/', 'http://example.org/', false],
             ['https://example.org/', '//example.org/', false],
             ['//example.org/', '//example.org/', true],
+            ['file:/myfile', 'file:///myfile', true],
+            ['file:///myfile', 'file://localhost/myfile', true],
         ];
     }
 }

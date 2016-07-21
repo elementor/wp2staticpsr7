@@ -95,6 +95,12 @@ class Uri implements UriInterface
      * getQuery(), getFragment() etc. always return a string. This explains the slight
      * difference to RFC 3986 Section 5.3.
      *
+     * Another adjustment is that the authority separator is added even when the authority is missing/empty
+     * for the "file" scheme. This is because PHP stream functions like `file_get_contents` only work with
+     * `file:///myfile` but not with `file:/myfile` although they are equivalent according to RFC 3986. But
+     * `file:///` is the more common syntax for the file scheme anyway (Chrome for example redirects to
+     * that format).
+     *
      * @param string $scheme
      * @param string $authority
      * @param string $path
