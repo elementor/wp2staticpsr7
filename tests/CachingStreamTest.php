@@ -11,9 +11,9 @@ use GuzzleHttp\Psr7\Stream;
 class CachingStreamTest extends \PHPUnit_Framework_TestCase
 {
     /** @var CachingStream */
-    protected $body;
+    private $body;
     /** @var Stream */
-    protected $decorated;
+    private $decorated;
 
     public function setUp()
     {

@@ -10,7 +10,7 @@ use GuzzleHttp\Psr7\UploadedFile;
  */
 class UploadedFileTest extends \PHPUnit_Framework_TestCase
 {
-    protected $cleanup;
+    private $cleanup;
 
     public function setUp()
     {
