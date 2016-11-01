@@ -158,4 +158,34 @@ class StreamTest extends \PHPUnit_Framework_TestCase
         $s = new NoSeekStream($s);
         $this->assertEquals('foo', (string) $s);
     }
+
+    public function testStreamReadingWithZeroLength()
+    {
+        $r = fopen('php://temp', 'r');
+        $stream = new Stream($r);
+
+        $this->assertEquals('', $stream->read(0));
+
+        $stream->close();
+    }
+
+    public function testStreamReadingWithNegativeLength()
+    {
+        $r = fopen('php://temp', 'r');
+        $stream = new Stream($r);
+
+        try {
+            $stream->read(-1);
+        } catch (\RuntimeException $e) {
+            $stream->close();
+            $this->assertEquals('Unable to read from stream', $e->getMessage());
+            return;
+        } catch (\Exception $e) {
+            $stream->close();
+            throw new \PHPUnit_Framework_Exception('Expect for RuntimeException');
+        }
+
+        $stream->close();
+        throw new \PHPUnit_Framework_Exception('Expect for Exception');
+    }
 }

@@ -208,7 +208,17 @@ class Stream implements StreamInterface
             throw new \RuntimeException('Cannot read from non-readable stream');
         }
 
-        return fread($this->stream, $length);
+        if (0 === $length) {
+            return '';
+        }
+
+        $string = $length > 0 ? fread($this->stream, $length) : false;
+
+        if (false === $string) {
+            throw new \RuntimeException('Unable to read from stream');
+        }
+
+        return $string;
     }
 
     public function write($string)
