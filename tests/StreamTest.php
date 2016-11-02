@@ -9,6 +9,8 @@ use GuzzleHttp\Psr7\Stream;
  */
 class StreamTest extends \PHPUnit_Framework_TestCase
 {
+    public static $isFReadError = false;
+
     /**
      * @expectedException \InvalidArgumentException
      */
@@ -164,28 +166,58 @@ class StreamTest extends \PHPUnit_Framework_TestCase
         $r = fopen('php://temp', 'r');
         $stream = new Stream($r);
 
-        $this->assertEquals('', $stream->read(0));
+        $this->assertSame('', $stream->read(0));
 
         $stream->close();
     }
 
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Length parameter cannot be negative
+     */
     public function testStreamReadingWithNegativeLength()
     {
-        $r = fopen('php://temp', 'r');
+        $r      = fopen('php://temp', 'r');
         $stream = new Stream($r);
 
         try {
             $stream->read(-1);
-        } catch (\RuntimeException $e) {
-            $stream->close();
-            $this->assertEquals('Unable to read from stream', $e->getMessage());
-            return;
         } catch (\Exception $e) {
             $stream->close();
-            throw new \PHPUnit_Framework_Exception('Expect for RuntimeException');
+            throw $e;
         }
 
         $stream->close();
-        throw new \PHPUnit_Framework_Exception('Expect for Exception');
     }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Unable to read from stream
+     */
+    public function testStreamReadingFreadError()
+    {
+        self::$isFReadError = true;
+        $r                  = fopen('php://temp', 'r');
+        $stream             = new Stream($r);
+
+        try {
+            $stream->read(1);
+        } catch (\Exception $e) {
+            self::$isFReadError = false;
+            $stream->close();
+            throw $e;
+        }
+
+        self::$isFReadError = false;
+        $stream->close();
+    }
+}
+
+namespace GuzzleHttp\Psr7;
+
+use GuzzleHttp\Tests\Psr7\StreamTest;
+
+function fread($handle, $length)
+{
+    return StreamTest::$isFReadError ? false : \fread($handle, $length);
 }
