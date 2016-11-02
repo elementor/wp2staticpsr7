@@ -177,7 +177,7 @@ class StreamTest extends \PHPUnit_Framework_TestCase
      */
     public function testStreamReadingWithNegativeLength()
     {
-        $r      = fopen('php://temp', 'r');
+        $r = fopen('php://temp', 'r');
         $stream = new Stream($r);
 
         try {
@@ -197,8 +197,8 @@ class StreamTest extends \PHPUnit_Framework_TestCase
     public function testStreamReadingFreadError()
     {
         self::$isFReadError = true;
-        $r                  = fopen('php://temp', 'r');
-        $stream             = new Stream($r);
+        $r = fopen('php://temp', 'r');
+        $stream = new Stream($r);
 
         try {
             $stream->read(1);
