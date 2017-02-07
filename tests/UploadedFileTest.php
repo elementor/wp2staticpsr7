@@ -252,7 +252,7 @@ class UploadedFileTest extends \PHPUnit_Framework_TestCase
     {
         $uploadedFile = new UploadedFile('not ok', 0, $status);
         $this->setExpectedException('RuntimeException', 'upload error');
-        $uploadedFile->moveTo(__DIR__ . '/' . uniqid());
+        $uploadedFile->moveTo(__DIR__ . '/' . sha1(uniqid('', true)));
     }
 
     /**
