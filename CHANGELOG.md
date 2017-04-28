@@ -1,5 +1,7 @@
 # CHANGELOG
 
+* Fix #145 Add response first-line to response string exception
+
 ## 1.4.2 - 2017-03-20
 
 * Reverted BC break to `Uri::resolve` and `Uri::removeDotSegments` by removing 
