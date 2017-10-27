@@ -680,6 +680,7 @@ function mimetype_from_extension($extension)
         'mid' => 'audio/midi',
         'midi' => 'audio/midi',
         'mov' => 'video/quicktime',
+        'mkv' => 'video/x-matroska',
         'mp3' => 'audio/mpeg',
         'mp4' => 'video/mp4',
         'mp4a' => 'audio/mp4',
