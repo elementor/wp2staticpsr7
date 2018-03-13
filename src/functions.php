@@ -758,27 +758,24 @@ function _parse_message($message)
         throw new \InvalidArgumentException('Invalid message');
     }
 
-    // Iterate over each line in the message, accounting for line endings
-    $lines = preg_split('/(\\r?\\n)/', $message, -1, PREG_SPLIT_DELIM_CAPTURE);
-    $result = ['start-line' => array_shift($lines), 'headers' => [], 'body' => ''];
-    array_shift($lines);
+    $headerDelimiterPosition = strpos($message, "\r\n\r\n");
+	$rawHeaders = substr($message, 0, $headerDelimiterPosition);
+	$headerLines = preg_split('/\\r\\n/', $rawHeaders);
 
-    for ($i = 0, $totalLines = count($lines); $i < $totalLines; $i += 2) {
-        $line = $lines[$i];
-        // If two line breaks were encountered, then this is the end of body
-        if (empty($line)) {
-            if ($i < $totalLines - 1) {
-                $result['body'] = implode('', array_slice($lines, $i + 2));
-            }
-            break;
-        }
-        if (strpos($line, ':')) {
-            $parts = explode(':', $line, 2);
-            $key = trim($parts[0]);
-            $value = isset($parts[1]) ? trim($parts[1]) : '';
-            $result['headers'][$key][] = $value;
-        }
-    }
+	$result = [
+		'start-line' => array_shift($headerLines),
+		'headers' => [],
+		'body' => (string) substr($message, $headerDelimiterPosition + 4),
+	];
+
+	foreach ($headerLines as $headerLine) {
+		if (strpos($headerLine, ':')) {
+			$parts = explode(':', $headerLine, 2);
+			$key = trim($parts[0]);
+			$value = isset($parts[1]) ? trim($parts[1]) : '';
+			$result['headers'][$key][] = $value;
+		}
+	}
 
     return $result;
 }
