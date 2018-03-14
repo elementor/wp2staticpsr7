@@ -759,22 +759,22 @@ function _parse_message($message)
     }
 
     $headerDelimiterPosition = strpos($message, "\r\n\r\n");
-	$rawHeaders = substr($message, 0, $headerDelimiterPosition);
-	$headerLines = preg_split('/\\r\\n/', $rawHeaders);
+	$rawHeaders = substr($message, 0, $headerDelimiterPosition + 2); // We preserve the last \r\n, hence +2
+	$startLineEndPosition = strpos($rawHeaders, "\r\n");
 
 	$result = [
-		'start-line' => array_shift($headerLines),
+		'start-line' => substr($rawHeaders, 0, $startLineEndPosition),
 		'headers' => [],
 		'body' => (string) substr($message, $headerDelimiterPosition + 4),
 	];
 
+	$rawHeaders = substr($rawHeaders, $startLineEndPosition + 2);
+
+	/** @var array[] $headerLines */
+	preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
+
 	foreach ($headerLines as $headerLine) {
-		if (strpos($headerLine, ':')) {
-			$parts = explode(':', $headerLine, 2);
-			$key = trim($parts[0]);
-			$value = isset($parts[1]) ? trim($parts[1]) : '';
-			$result['headers'][$key][] = $value;
-		}
+		$result['headers'][strtolower($headerLine[1])][] = $headerLine[2];
 	}
 
     return $result;
