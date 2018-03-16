@@ -759,12 +759,13 @@ function _parse_message($message)
     }
 
     $message = ltrim($message, "\r\n");
-    $rawHeaders = $message;
 
     $headerDelimiterPosition = strpos($message, "\r\n\r\n");
-    if ($headerDelimiterPosition !== false) {
-        $rawHeaders = substr($message, 0, $headerDelimiterPosition + 2); // We preserve the last \r\n, hence +2
+    if ($headerDelimiterPosition === false) {
+        throw new \InvalidArgumentException('Invalid message: Missing header delimiter');
     }
+
+    $rawHeaders = substr($message, 0, $headerDelimiterPosition + 2); // We preserve the last \r\n, hence +2
 
     $startLineEndPosition = strpos($rawHeaders, "\r\n");
 

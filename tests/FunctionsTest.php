@@ -364,16 +364,6 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('Test', (string) $response->getBody());
     }
 
-    public function testParsesResponseWithoutBody()
-    {
-        $res = "\r\nHTTP/1.0 200\r\nFoo: Bar\r\n";
-        $response = Psr7\parse_response($res);
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('OK', $response->getReasonPhrase());
-        $this->assertSame('1.0', $response->getProtocolVersion());
-        $this->assertSame('Bar', $response->getHeaderLine('Foo'));
-    }
-
 	/**
 	 * @expectedException \InvalidArgumentException
 	 * @expectedExceptionMessage Invalid header syntax: Obsolete line folding
@@ -382,6 +372,15 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 	{
 		Psr7\parse_response("HTTP/1.0 200\r\nFoo: Bar\r\n Baz: Bam\r\nBaz: Qux\r\n\r\nTest");
 	}
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Invalid message: Missing header delimiter
+     */
+    public function testParsingFailsWithoutHeaderDelimiter()
+    {
+        Psr7\parse_response("HTTP/1.0 200\r\nFoo: Bar\r\n Baz: Bam\r\nBaz: Qux\r\n");
+    }
 
     /**
      * @expectedException \InvalidArgumentException
