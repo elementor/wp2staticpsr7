@@ -759,33 +759,33 @@ function _parse_message($message)
     }
 
     $headerDelimiterPosition = strpos($message, "\r\n\r\n");
-	$rawHeaders = substr($message, 0, $headerDelimiterPosition + 2); // We preserve the last \r\n, hence +2
-	$startLineEndPosition = strpos($rawHeaders, "\r\n");
+    $rawHeaders = substr($message, 0, $headerDelimiterPosition + 2); // We preserve the last \r\n, hence +2
+    $startLineEndPosition = strpos($rawHeaders, "\r\n");
 
-	$result = [
-		'start-line' => substr($rawHeaders, 0, $startLineEndPosition),
-		'headers' => [],
-		'body' => (string) substr($message, $headerDelimiterPosition + 4),
-	];
+    $result = [
+        'start-line' => substr($rawHeaders, 0, $startLineEndPosition),
+        'headers' => [],
+        'body' => (string)substr($message, $headerDelimiterPosition + 4),
+    ];
 
-	$rawHeaders = substr($rawHeaders, $startLineEndPosition + 2);
+    $rawHeaders = substr($rawHeaders, $startLineEndPosition + 2);
 
-	/** @var array[] $headerLines */
-	$count = preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
+    /** @var array[] $headerLines */
+    $count = preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
 
-	// If these aren't the same, then one line didn't match and there's an invalid header.
-	if ($count !== substr_count($rawHeaders, "\n")) {
-		// Folding is deprecated, see https://tools.ietf.org/html/rfc7230#section-3.2.4
-		if (preg_match(Rfc7230::HEADER_FOLD_REGEX, $rawHeaders)) {
-			throw new \InvalidArgumentException('Invalid header syntax: Obsolete line folding');
-		}
+    // If these aren't the same, then one line didn't match and there's an invalid header.
+    if ($count !== substr_count($rawHeaders, "\n")) {
+        // Folding is deprecated, see https://tools.ietf.org/html/rfc7230#section-3.2.4
+        if (preg_match(Rfc7230::HEADER_FOLD_REGEX, $rawHeaders)) {
+            throw new \InvalidArgumentException('Invalid header syntax: Obsolete line folding');
+        }
 
-		throw new \InvalidArgumentException('Invalid header syntax');
-	}
+        throw new \InvalidArgumentException('Invalid header syntax');
+    }
 
-	foreach ($headerLines as $headerLine) {
-		$result['headers'][strtolower($headerLine[1])][] = $headerLine[2];
-	}
+    foreach ($headerLines as $headerLine) {
+        $result['headers'][strtolower($headerLine[1])][] = $headerLine[2];
+    }
 
     return $result;
 }
