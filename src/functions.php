@@ -771,7 +771,17 @@ function _parse_message($message)
 	$rawHeaders = substr($rawHeaders, $startLineEndPosition + 2);
 
 	/** @var array[] $headerLines */
-	preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
+	$count = preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
+
+	// If these aren't the same, then one line didn't match and there's an invalid header.
+	if ($count !== substr_count($rawHeaders, "\n")) {
+		// Folding is deprecated, see https://tools.ietf.org/html/rfc7230#section-3.2.4
+		if (preg_match(Rfc7230::HEADER_FOLD_REGEX, $rawHeaders)) {
+			throw new \InvalidArgumentException('Invalid header syntax: Obsolete line folding');
+		}
+
+		throw new \InvalidArgumentException('Invalid header syntax');
+	}
 
 	foreach ($headerLines as $headerLine) {
 		$result['headers'][strtolower($headerLine[1])][] = $headerLine[2];
