@@ -321,6 +321,24 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('GET_DATA', $request->getMethod());
     }
 
+    public function testParsesRequestMessagesWithFoldedHeadersOnHttp10()
+    {
+        $req = "PUT / HTTP/1.0\r\nFoo: Bar\r\n Bam\r\n\r\n";
+        $request = Psr7\parse_request($req);
+        $this->assertEquals('PUT', $request->getMethod());
+        $this->assertEquals('/', $request->getRequestTarget());
+        $this->assertEquals('Bar Bam', $request->getHeaderLine('Foo'));
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Invalid header syntax: Obsolete line folding
+     */
+    public function testRequestParsingFailsWithFoldedHeadersOnHttp11()
+    {
+        Psr7\parse_response("GET_DATA / HTTP/1.1\r\nFoo: Bar\r\n Bam\r\n\r\n");
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      */
@@ -364,20 +382,31 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('Test', (string) $response->getBody());
     }
 
+    public function testParsesResponseWithFoldedHeadersOnHttp10()
+    {
+        $res = "HTTP/1.0 200\r\nFoo: Bar\r\n Bam\r\n\r\nTest";
+        $response = Psr7\parse_response($res);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('OK', $response->getReasonPhrase());
+        $this->assertSame('1.0', $response->getProtocolVersion());
+        $this->assertSame('Bar Bam', $response->getHeaderLine('Foo'));
+        $this->assertSame('Test', (string) $response->getBody());
+    }
+
 	/**
 	 * @expectedException \InvalidArgumentException
 	 * @expectedExceptionMessage Invalid header syntax: Obsolete line folding
 	 */
-	public function testParsingFailsWithFoldedHeaders()
+	public function testResponseParsingFailsWithFoldedHeadersOnHttp11()
 	{
-		Psr7\parse_response("HTTP/1.0 200\r\nFoo: Bar\r\n Baz: Bam\r\nBaz: Qux\r\n\r\nTest");
+		Psr7\parse_response("HTTP/1.1 200\r\nFoo: Bar\r\n Bam\r\nBaz: Qux\r\n\r\nTest");
 	}
 
     /**
      * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage Invalid message: Missing header delimiter
      */
-    public function testParsingFailsWithoutHeaderDelimiter()
+    public function testResponseParsingFailsWithoutHeaderDelimiter()
     {
         Psr7\parse_response("HTTP/1.0 200\r\nFoo: Bar\r\n Baz: Bam\r\nBaz: Qux\r\n");
     }

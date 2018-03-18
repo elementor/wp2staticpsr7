@@ -766,16 +766,14 @@ function _parse_message($message)
     }
 
     $rawHeaders = substr($message, 0, $headerDelimiterPosition + 2); // We preserve the last \r\n, hence +2
-
     $startLineEndPosition = strpos($rawHeaders, "\r\n");
-
-    $result = [
-        'start-line' => substr($rawHeaders, 0, $startLineEndPosition),
-        'headers' => [],
-        'body' => (string)substr($message, $headerDelimiterPosition + 4),
-    ];
-
+    $startLine = substr($rawHeaders, 0, $startLineEndPosition);
     $rawHeaders = substr($rawHeaders, $startLineEndPosition + 2);
+
+    if (preg_match("/HTTP\/(\d+(?:\.\d+)?)/i", $startLine, $matches) && $matches[1] === '1.0') {
+        // Header folding is deprecated for HTTP/1.1, but allowed in HTTP/1.0
+        $rawHeaders = preg_replace(Rfc7230::HEADER_FOLD_REGEX, ' ', $rawHeaders);
+    }
 
     /** @var array[] $headerLines */
     $count = preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
@@ -790,11 +788,17 @@ function _parse_message($message)
         throw new \InvalidArgumentException('Invalid header syntax');
     }
 
+    $headers = [];
+
     foreach ($headerLines as $headerLine) {
-        $result['headers'][strtolower($headerLine[1])][] = $headerLine[2];
+        $headers[strtolower($headerLine[1])][] = $headerLine[2];
     }
 
-    return $result;
+    return [
+        'start-line' => $startLine,
+        'headers' => $headers,
+        'body' => (string)substr($message, $headerDelimiterPosition + 4),
+    ];
 }
 
 /**
