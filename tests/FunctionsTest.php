@@ -339,6 +339,16 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         Psr7\parse_response("GET_DATA / HTTP/1.1\r\nFoo: Bar\r\n Bam\r\n\r\n");
     }
 
+    public function testParsesRequestMessagesWhenHeaderDelimiterIsOnlyALineFeed()
+    {
+        $req = "PUT / HTTP/1.0\nFoo: Bar\nBaz: Bam\n\n";
+        $request = Psr7\parse_request($req);
+        $this->assertEquals('PUT', $request->getMethod());
+        $this->assertEquals('/', $request->getRequestTarget());
+        $this->assertEquals('Bar', $request->getHeaderLine('Foo'));
+        $this->assertEquals('Bam', $request->getHeaderLine('Baz'));
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      */
@@ -401,6 +411,18 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 	{
 		Psr7\parse_response("HTTP/1.1 200\r\nFoo: Bar\r\n Bam\r\nBaz: Qux\r\n\r\nTest");
 	}
+
+    public function testParsesResponseWhenHeaderDelimiterIsOnlyALineFeed()
+    {
+        $res = "HTTP/1.0 200\nFoo: Bar\nBaz: Bam\n\nTest\n\nOtherTest";
+        $response = Psr7\parse_response($res);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('OK', $response->getReasonPhrase());
+        $this->assertSame('1.0', $response->getProtocolVersion());
+        $this->assertSame('Bar', $response->getHeaderLine('Foo'));
+        $this->assertSame('Bam', $response->getHeaderLine('Baz'));
+        $this->assertSame("Test\n\nOtherTest", (string) $response->getBody());
+    }
 
     /**
      * @expectedException \InvalidArgumentException

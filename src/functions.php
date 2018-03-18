@@ -760,15 +760,21 @@ function _parse_message($message)
 
     $message = ltrim($message, "\r\n");
 
-    $headerDelimiterPosition = strpos($message, "\r\n\r\n");
-    if ($headerDelimiterPosition === false) {
+    $messageParts = preg_split("/\r?\n\r?\n/", $message, 2);
+
+    if ($messageParts === false || count($messageParts) !== 2) {
         throw new \InvalidArgumentException('Invalid message: Missing header delimiter');
     }
 
-    $rawHeaders = substr($message, 0, $headerDelimiterPosition + 2); // We preserve the last \r\n, hence +2
-    $startLineEndPosition = strpos($rawHeaders, "\r\n");
-    $startLine = substr($rawHeaders, 0, $startLineEndPosition);
-    $rawHeaders = substr($rawHeaders, $startLineEndPosition + 2);
+    list($rawHeaders, $body) = $messageParts;
+    $rawHeaders .= "\r\n"; // Put back the delimiter we split previously
+    $headerParts = preg_split("/\r?\n/", $rawHeaders, 2);
+
+    if ($headerParts === false || count($headerParts) !== 2) {
+        throw new \InvalidArgumentException('Invalid message: Missing status line');
+    }
+
+    list($startLine, $rawHeaders) = $headerParts;
 
     if (preg_match("/HTTP\/(\d+(?:\.\d+)?)/i", $startLine, $matches) && $matches[1] === '1.0') {
         // Header folding is deprecated for HTTP/1.1, but allowed in HTTP/1.0
@@ -797,7 +803,7 @@ function _parse_message($message)
     return [
         'start-line' => $startLine,
         'headers' => $headers,
-        'body' => (string)substr($message, $headerDelimiterPosition + 4),
+        'body' => $body,
     ];
 }
 
