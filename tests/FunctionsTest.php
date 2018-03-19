@@ -336,7 +336,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
      */
     public function testRequestParsingFailsWithFoldedHeadersOnHttp11()
     {
-        Psr7\parse_response("GET_DATA / HTTP/1.1\r\nFoo: Bar\r\n Bam\r\n\r\n");
+        Psr7\parse_response("GET_DATA / HTTP/1.1\r\nFoo: Bar\r\n Biz: Bam\r\n\r\n");
     }
 
     public function testParsesRequestMessagesWhenHeaderDelimiterIsOnlyALineFeed()
@@ -409,7 +409,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
      */
     public function testResponseParsingFailsWithFoldedHeadersOnHttp11()
     {
-        Psr7\parse_response("HTTP/1.1 200\r\nFoo: Bar\r\n Bam\r\nBaz: Qux\r\n\r\nTest");
+        Psr7\parse_response("HTTP/1.1 200\r\nFoo: Bar\r\n Biz: Bam\r\nBaz: Qux\r\n\r\nTest");
     }
 
     public function testParsesResponseWhenHeaderDelimiterIsOnlyALineFeed()
