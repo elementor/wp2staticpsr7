@@ -403,14 +403,14 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('Test', (string) $response->getBody());
     }
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 * @expectedExceptionMessage Invalid header syntax: Obsolete line folding
-	 */
-	public function testResponseParsingFailsWithFoldedHeadersOnHttp11()
-	{
-		Psr7\parse_response("HTTP/1.1 200\r\nFoo: Bar\r\n Bam\r\nBaz: Qux\r\n\r\nTest");
-	}
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Invalid header syntax: Obsolete line folding
+     */
+    public function testResponseParsingFailsWithFoldedHeadersOnHttp11()
+    {
+        Psr7\parse_response("HTTP/1.1 200\r\nFoo: Bar\r\n Bam\r\nBaz: Qux\r\n\r\nTest");
+    }
 
     public function testParsesResponseWhenHeaderDelimiterIsOnlyALineFeed()
     {
@@ -421,7 +421,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('1.0', $response->getProtocolVersion());
         $this->assertSame('Bar', $response->getHeaderLine('Foo'));
         $this->assertSame('Bam', $response->getHeaderLine('Baz'));
-        $this->assertSame("Test\n\nOtherTest", (string) $response->getBody());
+        $this->assertSame("Test\n\nOtherTest", (string)$response->getBody());
     }
 
     /**
