@@ -797,7 +797,7 @@ function _parse_message($message)
     $headers = [];
 
     foreach ($headerLines as $headerLine) {
-        $headers[strtolower($headerLine[1])][] = $headerLine[2];
+        $headers[$headerLine[1]][] = $headerLine[2];
     }
 
     return [
