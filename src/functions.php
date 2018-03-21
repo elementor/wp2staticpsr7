@@ -758,29 +758,53 @@ function _parse_message($message)
         throw new \InvalidArgumentException('Invalid message');
     }
 
-    // Iterate over each line in the message, accounting for line endings
-    $lines = preg_split('/(\\r?\\n)/', $message, -1, PREG_SPLIT_DELIM_CAPTURE);
-    $result = ['start-line' => array_shift($lines), 'headers' => [], 'body' => ''];
-    array_shift($lines);
+    $message = ltrim($message, "\r\n");
 
-    for ($i = 0, $totalLines = count($lines); $i < $totalLines; $i += 2) {
-        $line = $lines[$i];
-        // If two line breaks were encountered, then this is the end of body
-        if (empty($line)) {
-            if ($i < $totalLines - 1) {
-                $result['body'] = implode('', array_slice($lines, $i + 2));
-            }
-            break;
-        }
-        if (strpos($line, ':')) {
-            $parts = explode(':', $line, 2);
-            $key = trim($parts[0]);
-            $value = isset($parts[1]) ? trim($parts[1]) : '';
-            $result['headers'][$key][] = $value;
-        }
+    $messageParts = preg_split("/\r?\n\r?\n/", $message, 2);
+
+    if ($messageParts === false || count($messageParts) !== 2) {
+        throw new \InvalidArgumentException('Invalid message: Missing header delimiter');
     }
 
-    return $result;
+    list($rawHeaders, $body) = $messageParts;
+    $rawHeaders .= "\r\n"; // Put back the delimiter we split previously
+    $headerParts = preg_split("/\r?\n/", $rawHeaders, 2);
+
+    if ($headerParts === false || count($headerParts) !== 2) {
+        throw new \InvalidArgumentException('Invalid message: Missing status line');
+    }
+
+    list($startLine, $rawHeaders) = $headerParts;
+
+    if (preg_match("/(?:^HTTP\/|^[A-Z]+ \S+ HTTP\/)(\d+(?:\.\d+)?)/i", $startLine, $matches) && $matches[1] === '1.0') {
+        // Header folding is deprecated for HTTP/1.1, but allowed in HTTP/1.0
+        $rawHeaders = preg_replace(Rfc7230::HEADER_FOLD_REGEX, ' ', $rawHeaders);
+    }
+
+    /** @var array[] $headerLines */
+    $count = preg_match_all(Rfc7230::HEADER_REGEX, $rawHeaders, $headerLines, PREG_SET_ORDER);
+
+    // If these aren't the same, then one line didn't match and there's an invalid header.
+    if ($count !== substr_count($rawHeaders, "\n")) {
+        // Folding is deprecated, see https://tools.ietf.org/html/rfc7230#section-3.2.4
+        if (preg_match(Rfc7230::HEADER_FOLD_REGEX, $rawHeaders)) {
+            throw new \InvalidArgumentException('Invalid header syntax: Obsolete line folding');
+        }
+
+        throw new \InvalidArgumentException('Invalid header syntax');
+    }
+
+    $headers = [];
+
+    foreach ($headerLines as $headerLine) {
+        $headers[$headerLine[1]][] = $headerLine[2];
+    }
+
+    return [
+        'start-line' => $startLine,
+        'headers' => $headers,
+        'body' => $body,
+    ];
 }
 
 /**
