@@ -740,6 +740,18 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $r2 = Psr7\modify_request($r1, ['remove_headers' => ['non-existent']]);
         $this->assertTrue($r2 instanceof ServerRequestInterface);
     }
+
+    public function testMessageBodySummaryWithSmallBody()
+    {
+        $message = new Psr7\Response(200, [], 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.');
+        $this->assertEquals('Lorem ipsum dolor sit amet, consectetur adipiscing elit.', Psr7\get_message_body_summary($message));
+    }
+
+    public function testMessageBodySummaryWithLargeBody()
+    {
+        $message = new Psr7\Response(200, [], 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.');
+        $this->assertEquals('Lorem ipsu (truncated...)', Psr7\get_message_body_summary($message, 10));
+    }
 }
 
 class HasToString
