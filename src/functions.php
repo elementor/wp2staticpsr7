@@ -816,7 +816,8 @@ function _parse_request_uri($path, array $headers)
  *
  * @return null|string
  */
-function get_message_body_summary(MessageInterface $message, $truncateAt = 120){
+function get_message_body_summary(MessageInterface $message, $truncateAt = 120)
+{
     $body = $message->getBody();
 
     if (!$body->isSeekable()) {
