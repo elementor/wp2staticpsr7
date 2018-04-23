@@ -5,7 +5,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\InflateStream;
 use GuzzleHttp\Psr7\NoSeekStream;
 
-class InflateStreamtest extends \PHPUnit_Framework_TestCase
+class InflateStreamtest extends \PHPUnit\Framework\TestCase
 {
     public function testInflatesStreams()
     {

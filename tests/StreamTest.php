@@ -7,7 +7,7 @@ use GuzzleHttp\Psr7\Stream;
 /**
  * @covers GuzzleHttp\Psr7\Stream
  */
-class StreamTest extends \PHPUnit_Framework_TestCase
+class StreamTest extends \PHPUnit\Framework\TestCase
 {
     public static $isFReadError = false;
 
