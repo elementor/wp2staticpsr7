@@ -517,7 +517,7 @@ function parse_response($message)
  * be parsed into ['foo[a]' => '1', 'foo[b]' => '2']).
  *
  * @param string      $str         Query string to parse
- * @param bool|string $urlEncoding How the query string is encoded
+ * @param int|bool $urlEncoding How the query string is encoded
  *
  * @return array
  */
@@ -566,7 +566,7 @@ function parse_query($str, $urlEncoding = true)
  * encountered (like http_build_query would).
  *
  * @param array     $params   Query string parameters.
- * @param int|false $encoding Set to false to not encode, PHP_QUERY_RFC3986
+ * @param int|bool $encoding Set to false to not encode, PHP_QUERY_RFC3986
  *                            to encode using RFC3986, or PHP_QUERY_RFC1738
  *                            to encode using RFC1738.
  * @return string
