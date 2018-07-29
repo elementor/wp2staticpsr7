@@ -6,7 +6,7 @@ use GuzzleHttp\Psr7\Uri;
 /**
  * @covers GuzzleHttp\Psr7\Uri
  */
-class UriTest extends \PHPUnit\Framework\TestCase
+class UriTest extends BaseTest
 {
     public function testParsesProvidedUri()
     {
@@ -587,9 +587,6 @@ class UriTest extends \PHPUnit\Framework\TestCase
         (new Uri)->withPath('//foo');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testPathStartingWithTwoSlashes()
     {
         $uri = new Uri('http://example.org//path-not-host.com');
@@ -597,6 +594,7 @@ class UriTest extends \PHPUnit\Framework\TestCase
 
         $uri = $uri->withScheme('');
         $this->assertSame('//example.org//path-not-host.com', (string) $uri); // This is still valid
+        $this->expectException('\InvalidArgumentException');
         $uri->withHost(''); // Now it becomes invalid
     }
 
@@ -609,14 +607,12 @@ class UriTest extends \PHPUnit\Framework\TestCase
         (new Uri)->withPath('mailto:foo');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testRelativeUriWithPathHavingColonSegment()
     {
         $uri = (new Uri('urn:/mailto:foo'))->withScheme('');
         $this->assertSame('/mailto:foo', $uri->getPath());
 
+        $this->expectException('\InvalidArgumentException');
         (new Uri('urn:mailto:foo'))->withScheme('');
     }
 

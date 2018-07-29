@@ -7,7 +7,7 @@ use GuzzleHttp\Psr7\UriNormalizer;
 /**
  * @covers GuzzleHttp\Psr7\UriNormalizer
  */
-class UriNormalizerTest extends \PHPUnit\Framework\TestCase
+class UriNormalizerTest extends BaseTest
 {
     public function testCapitalizePercentEncoding()
     {

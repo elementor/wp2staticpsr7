@@ -7,7 +7,7 @@ use GuzzleHttp\Psr7;
 /**
  * @covers GuzzleHttp\Psr7\StreamWrapper
  */
-class StreamWrapperTest extends \PHPUnit\Framework\TestCase
+class StreamWrapperTest extends BaseTest
 {
     public function testResource()
     {

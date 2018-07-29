@@ -8,7 +8,7 @@ use GuzzleHttp\Psr7\Uri;
 /**
  * @covers GuzzleHttp\Psr7\ServerRequest
  */
-class ServerRequestTest extends \PHPUnit\Framework\TestCase
+class ServerRequestTest extends BaseTest
 {
     public function dataNormalizeFiles()
     {
@@ -264,12 +264,9 @@ class ServerRequestTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $result);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Invalid value in files specification
-     */
     public function testNormalizeFilesRaisesException()
     {
+        $this->expectException('InvalidArgumentException', 'Invalid value in files specification');
         ServerRequest::normalizeFiles(['test' => 'something']);
     }
 
