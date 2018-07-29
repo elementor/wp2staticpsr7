@@ -60,7 +60,6 @@ class UploadedFileTest extends BaseTest
     }
 
     /**
-     * @expectedExceptionMessage size
      * @dataProvider invalidSizes
      */
     public function testRaisesExceptionOnInvalidSize($size)

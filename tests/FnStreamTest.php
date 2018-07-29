@@ -89,10 +89,6 @@ class FnStreamTest extends BaseTest
         $this->assertTrue($called);
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage FnStream should never be unserialized
-     */
     public function testDoNotAllowUnserialization()
     {
         $a = new FnStream([]);
