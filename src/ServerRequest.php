@@ -180,11 +180,15 @@ class ServerRequest extends Request implements ServerRequestInterface
             ->withUploadedFiles(self::normalizeFiles($_FILES));
     }
 
-    private static function extractPortFromHost($host)
+    private static function extractHostAndPortFromAuthority ($authority)
     {
-        $url = "http://{$host}";
-        $parts = parse_url($url);
-        $host = $parts['host'];
+        $uri = 'http://'.$authority;
+        $parts = parse_url($uri);
+        if (false === $parts) {
+            return [null, null];
+        }
+
+        $host = isset($parts['host']) ? $parts['host'] : null;
         $port = isset($parts['port']) ? $parts['port'] : null;
 
         return [$host, $port];
@@ -203,8 +207,10 @@ class ServerRequest extends Request implements ServerRequestInterface
 
         $hasPort = false;
         if (isset($_SERVER['HTTP_HOST'])) {
-            list($host, $port) = static::extractPortFromHost($_SERVER['HTTP_HOST']);
-            $uri = $uri->withHost($host);
+            list($host, $port) = self::extractHostAndPortFromAuthority($_SERVER['HTTP_HOST']);
+            if ($host !== null) {
+                $uri = $uri->withHost($host);
+            }
 
             if ($port !== null) {
                 $hasPort = true;

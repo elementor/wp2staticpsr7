@@ -327,6 +327,10 @@ class ServerRequestTest extends BaseTest
                 'https://[::1]:8000/blog/article.php?id=10&user=foo',
                 array_merge($server, ['HTTP_HOST' => '[::1]:8000']),
             ],
+            'Invalid host' => [
+                'https://localhost/blog/article.php?id=10&user=foo',
+                array_merge($server, ['HTTP_HOST' => 'a:b']),
+            ],
             'Different port with SERVER_PORT' => [
                 'https://www.example.org:8324/blog/article.php?id=10&user=foo',
                 array_merge($server, ['SERVER_PORT' => '8324']),
