@@ -565,10 +565,10 @@ function parse_query($str, $urlEncoding = true)
  * string. This function does not modify the provided keys when an array is
  * encountered (like http_build_query would).
  *
- * @param array    $params   Query string parameters.
- * @param int|bool $encoding Set to false to not encode, PHP_QUERY_RFC3986
- *                           to encode using RFC3986, or PHP_QUERY_RFC1738
- *                           to encode using RFC1738.
+ * @param array     $params   Query string parameters.
+ * @param int|false $encoding Set to false to not encode, PHP_QUERY_RFC3986
+ *                            to encode using RFC3986, or PHP_QUERY_RFC1738
+ *                            to encode using RFC1738.
  * @return string
  */
 function build_query(array $params, $encoding = PHP_QUERY_RFC3986)
