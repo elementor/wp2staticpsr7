@@ -238,7 +238,7 @@ function modify_request(RequestInterface $request, array $changes)
     }
 
     if ($request instanceof ServerRequestInterface) {
-        return new ServerRequest(
+        return (new ServerRequest(
             isset($changes['method']) ? $changes['method'] : $request->getMethod(),
             $uri,
             $headers,
@@ -247,7 +247,12 @@ function modify_request(RequestInterface $request, array $changes)
                 ? $changes['version']
                 : $request->getProtocolVersion(),
             $request->getServerParams()
-        );
+        ))
+        ->withParsedBody($request->getParsedBody())
+        ->withQueryParams($request->getQueryParams())
+        ->withCookieParams($request->getCookieParams())
+        ->withUploadedFiles($request->getUploadedFiles());
+
     }
 
     return new Request(
