@@ -766,7 +766,6 @@ class FunctionsTest extends BaseTest
 
         $files = $modifiedRequest->getUploadedFiles();
         $this->assertInstanceOf('GuzzleHttp\Psr7\UploadedFile', $files[0]);
-
     }
 
     public function testModifyServerRequestWithCookies()

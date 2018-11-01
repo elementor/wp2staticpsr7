@@ -252,7 +252,6 @@ function modify_request(RequestInterface $request, array $changes)
         ->withQueryParams($request->getQueryParams())
         ->withCookieParams($request->getCookieParams())
         ->withUploadedFiles($request->getUploadedFiles());
-
     }
 
     return new Request(
