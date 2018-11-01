@@ -180,7 +180,7 @@ class ServerRequest extends Request implements ServerRequestInterface
             ->withUploadedFiles(self::normalizeFiles($_FILES));
     }
 
-    private static function extractHostAndPortFromAuthority ($authority)
+    private static function extractHostAndPortFromAuthority($authority)
     {
         $uri = 'http://'.$authority;
         $parts = parse_url($uri);
