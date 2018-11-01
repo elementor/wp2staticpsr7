@@ -328,7 +328,7 @@ class UriTest extends BaseTest
 
     public function testWithQueryValues()
     {
-        $uri = New Uri();
+        $uri = new Uri();
         $uri = Uri::withQueryValues($uri, [
             'key1' => 'value1',
             'key2' => 'value2'

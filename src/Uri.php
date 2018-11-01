@@ -333,11 +333,7 @@ class Uri implements UriInterface
     /**
      * Creates a new URI with multiple specific query string values.
      *
-     * Any existing query string values that exactly match the provided key are
-     * removed and replaced with the given key value pair.
-     *
-     * A value of null will set the query string key without a value, e.g. "key"
-     * instead of "key=value".
+     * It has the same behavior as withQueryValue() but for an associative array of key => value.
      *
      * @param UriInterface $uri           URI to use as a base.
      * @param array        $keyValueArray Associative array of key and values
@@ -636,7 +632,7 @@ class Uri implements UriInterface
         $decodedKeys = array_map('rawurldecode', $keys);
 
         return array_filter(explode('&', $current), function ($part) use ($decodedKeys) {
-            return !in_array(rawurldecode(explode('=', $part)[0]), $decodedKeys);
+            return !in_array(rawurldecode(explode('=', $part)[0]), $decodedKeys, true);
         });
     }
 
