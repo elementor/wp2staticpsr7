@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Response first-line to response string exception (fixes #145)
 - A test for #129 behavior
 - `get_message_body_summary` function in order to get the message summary
+- `3gp` and `mkv` mime types
 
 ### Changed
 
