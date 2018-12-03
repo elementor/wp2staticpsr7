@@ -13,18 +13,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Response first-line to response string exception (fixes #145)
 - A test for #129 behavior
+- `get_message_body_summary` function in order to get the message summary
 
 ### Changed
 
 - Clarify exception message when stream is detached
 
-### Fixed
-
-- Fix `AppendStream::detach` to not close streams
-
 ### Deprecated
 
 - Deprecated parsing folded header lines as per RFC 7230
+
+### Fixed
+
+- Fix `AppendStream::detach` to not close streams
+- `InflateStream` preserves `isSeekable` attribute of the underlying stream
+- `ServerRequest::getUriFromGlobals` to support URLs in query parameters
+
+
+Several other fixes and improvements.
 
 
 ## [1.4.2] - 2017-03-20
@@ -75,17 +81,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     because the path of a URI with an authority must start with a slash "/" or be empty
   - `(new Uri())->withScheme('http')` will return `'http://localhost'`
 
+### Deprecated
+
+- `Uri::resolve` in favor of `UriResolver::resolve`
+- `Uri::removeDotSegments` in favor of `UriResolver::removeDotSegments`
+
 ### Fixed
 
 - `Stream::read` when length parameter <= 0.
 - `copy_to_stream` reads bytes in chunks instead of `maxLen` into memory.
 - `ServerRequest::getUriFromGlobals` when `Host` header contains port.
 - Compatibility of URIs with `file` scheme and empty host.
-
-### Deprecated
-
-- `Uri::resolve` in favor of `UriResolver::resolve`
-- `Uri::removeDotSegments` in favor of `UriResolver::removeDotSegments`
 
 
 ## [1.3.1] - 2016-06-25
