@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+## [1.5.0] - 2018-12-03
+
 ### Added
 
 - Response first-line to response string exception (fixes #145)
@@ -192,7 +195,8 @@ Currently unsupported:
 
 
 
-[Unreleased]: https://github.com/guzzle/psr7/compare/1.4.2...HEAD
+[Unreleased]: https://github.com/guzzle/psr7/compare/1.5.0...HEAD
+[1.5.0]: https://github.com/guzzle/psr7/compare/1.4.2...1.5.0
 [1.4.2]: https://github.com/guzzle/psr7/compare/1.4.1...1.4.2
 [1.4.1]: https://github.com/guzzle/psr7/compare/1.4.0...1.4.1
 [1.4.0]: https://github.com/guzzle/psr7/compare/1.3.1...1.4.0
