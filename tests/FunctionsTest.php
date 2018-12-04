@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests\Psr7;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\NoSeekStream;
+use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\ServerRequestInterface;
 
 class FunctionsTest extends BaseTest
@@ -753,6 +754,11 @@ class FunctionsTest extends BaseTest
         $this->assertEquals('Lorem ipsu (truncated...)', Psr7\get_message_body_summary($message, 10));
     }
 
+    public function testGetResponseBodySummaryOfNonReadableStream()
+    {
+        $this->assertNull(Psr7\get_message_body_summary(new Psr7\Response(500, [], new ReadSeekOnlyStream())));
+    }
+
     public function testModifyServerRequestWithUploadedFiles()
     {
         $request = new Psr7\ServerRequest('GET', 'http://example.com/bla');
@@ -807,5 +813,24 @@ class HasToString
 {
     public function __toString() {
         return 'foo';
+    }
+}
+
+/**
+ * convert it to an anonymous class on PHP7
+ */
+final class ReadSeekOnlyStream extends Stream
+{
+    public function __construct()
+    {
+        parent::__construct(fopen('php://memory', 'wb'));
+    }
+    public function isSeekable()
+    {
+        return true;
+    }
+    public function isReadable()
+    {
+        return false;
     }
 }
