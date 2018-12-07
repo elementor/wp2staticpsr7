@@ -231,6 +231,32 @@ class StreamTest extends BaseTest
         self::$isFReadError = false;
         $stream->close();
     }
+
+    /**
+     * @dataProvider gzipModeProvider
+     *
+     * @param string $mode
+     * @param bool   $readable
+     * @param bool   $writable
+     */
+    public function testGzipStreamModes($mode, $readable, $writable)
+    {
+        $r = gzopen('php://temp', $mode);
+        $stream = new Stream($r);
+
+        $this->assertSame($readable, $stream->isReadable());
+        $this->assertSame($writable, $stream->isWritable());
+
+        $stream->close();
+    }
+
+    public function gzipModeProvider()
+    {
+        return [
+            ['mode' => 'rb9', 'readable' => true, 'writable' => false],
+            ['mode' => 'wb2', 'readable' => false, 'writable' => true],
+        ];
+    }
 }
 
 namespace GuzzleHttp\Psr7;
