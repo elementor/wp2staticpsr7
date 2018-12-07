@@ -257,6 +257,83 @@ class StreamTest extends BaseTest
             ['mode' => 'wb2', 'readable' => false, 'writable' => true],
         ];
     }
+
+    /**
+     * @dataProvider readableModeProvider
+     *
+     * @param string $mode
+     */
+    public function testReadableStream($mode)
+    {
+        $r = fopen('php://temp', $mode);
+        $stream = new Stream($r);
+
+        $this->assertTrue($stream->isReadable());
+
+        $stream->close();
+    }
+
+    public function readableModeProvider()
+    {
+        return [
+            ['r'],
+            ['w+'],
+            ['r+'],
+            ['x+'],
+            ['c+'],
+            ['rb'],
+            ['w+b'],
+            ['r+b'],
+            ['x+b'],
+            ['c+b'],
+            ['rt'],
+            ['w+t'],
+            ['r+t'],
+            ['x+t'],
+            ['c+t'],
+            ['a+'],
+            ['rb+'],
+        ];
+    }
+
+    /**
+     * @dataProvider writableModeProvider
+     *
+     * @param string $mode
+     */
+    public function testWritableStream($mode)
+    {
+        $r = fopen('php://temp', $mode);
+        $stream = new Stream($r);
+
+        $this->assertTrue($stream->isWritable());
+
+        $stream->close();
+    }
+
+    public function writableModeProvider()
+    {
+        return [
+            ['w'],
+            ['w+'],
+            ['rw'],
+            ['r+'],
+            ['x+'],
+            ['c+'],
+            ['wb'],
+            ['w+b'],
+            ['r+b'],
+            ['rb+'],
+            ['x+b'],
+            ['c+b'],
+            ['w+t'],
+            ['r+t'],
+            ['x+t'],
+            ['c+t'],
+            ['a'],
+            ['a+'],
+        ];
+    }
 }
 
 namespace GuzzleHttp\Psr7;
