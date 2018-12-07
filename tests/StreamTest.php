@@ -241,6 +241,10 @@ class StreamTest extends BaseTest
      */
     public function testGzipStreamModes($mode, $readable, $writable)
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('This does not work on HHVM.');
+        }
+
         $r = gzopen('php://temp', $mode);
         $stream = new Stream($r);
 
