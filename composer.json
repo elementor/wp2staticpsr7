@@ -26,6 +26,9 @@
     "provide": {
         "psr/http-message-implementation": "1.0"
     },
+    "suggest": {
+        "zendframework/zend-httphandlerrunner": "Emit PSR-7 responses"
+    },
     "autoload": {
         "psr-4": {
             "GuzzleHttp\\Psr7\\": "src/"
