@@ -300,6 +300,16 @@ class StreamTest extends BaseTest
         ];
     }
 
+    public function testWriteOnlyStreamIsNotReadable()
+    {
+        $r = fopen('php://output', 'w');
+        $stream = new Stream($r);
+
+        $this->assertFalse($stream->isReadable());
+
+        $stream->close();
+    }
+
     /**
      * @dataProvider writableModeProvider
      *
@@ -337,6 +347,16 @@ class StreamTest extends BaseTest
             ['a'],
             ['a+'],
         ];
+    }
+
+    public function testReadOnlyStreamIsNotWritable()
+    {
+        $r = fopen('php://input', 'r');
+        $stream = new Stream($r);
+
+        $this->assertFalse($stream->isWritable());
+
+        $stream->close();
     }
 }
 
