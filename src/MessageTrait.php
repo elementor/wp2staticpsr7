@@ -66,11 +66,8 @@ trait MessageTrait
 
     public function withHeader($header, $value)
     {
-        if (!is_array($value)) {
-            $value = [$value];
-        }
-
-        $value = $this->trimHeaderValues($value);
+        $this->assertHeader($header);
+        $value = $this->normalizeHeaderValue($value);
         $normalized = strtolower($header);
 
         $new = clone $this;
@@ -85,11 +82,8 @@ trait MessageTrait
 
     public function withAddedHeader($header, $value)
     {
-        if (!is_array($value)) {
-            $value = [$value];
-        }
-
-        $value = $this->trimHeaderValues($value);
+        $this->assertHeader($header);
+        $value = $this->normalizeHeaderValue($value);
         $normalized = strtolower($header);
 
         $new = clone $this;
@@ -144,11 +138,8 @@ trait MessageTrait
     {
         $this->headerNames = $this->headers = [];
         foreach ($headers as $header => $value) {
-            if (!is_array($value)) {
-                $value = [$value];
-            }
-
-            $value = $this->trimHeaderValues($value);
+            $this->assertHeader($header);
+            $value = $this->normalizeHeaderValue($value);
             $normalized = strtolower($header);
             if (isset($this->headerNames[$normalized])) {
                 $header = $this->headerNames[$normalized];
@@ -158,6 +149,23 @@ trait MessageTrait
                 $this->headers[$header] = $value;
             }
         }
+    }
+
+    private function normalizeHeaderValue($value)
+    {
+        if (!is_array($value)) {
+            if (!is_string($value)) {
+                throw new \InvalidArgumentException('Header value must be a string or an array of strings.');
+            }
+
+            return $this->trimHeaderValues([$value]);
+        }
+
+        if (count($value) === 0) {
+            throw new \InvalidArgumentException('Header value can not be an empty array.');
+        }
+
+        return $this->trimHeaderValues($value);
     }
 
     /**
@@ -177,7 +185,17 @@ trait MessageTrait
     private function trimHeaderValues(array $values)
     {
         return array_map(function ($value) {
+            if (!is_string($value)) {
+                throw new \InvalidArgumentException('Header value must be a string.');
+            }
             return trim($value, " \t");
         }, $values);
+    }
+
+    private function assertHeader($header)
+    {
+        if (!is_string($header) || $header === '') {
+            throw new \InvalidArgumentException('Header must be a non empty string.');
+        }
     }
 }
