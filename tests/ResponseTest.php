@@ -162,6 +162,12 @@ class ResponseTest extends BaseTest
         $this->assertSame(['Bam'], $r2->getHeader('baz'));
     }
 
+    public function testNumericHeaderValue()
+    {
+        $r = (new Response())->withHeader('Api-Version', 1);
+        $this->assertSame(['Api-Version' => ['1']], $r->getHeaders());
+    }
+
     public function testWithHeaderAsArray()
     {
         $r = new Response(200, ['Foo' => 'Bar']);
