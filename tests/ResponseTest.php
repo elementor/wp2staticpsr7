@@ -263,7 +263,7 @@ class ResponseTest extends BaseTest
         return [
             ['foo', [], 'Header value can not be an empty array.'],
             ['', '', 'Header name can not be empty.'],
-            ['foo', new \stdClass(),  'Header value must be scalar or null but stdClass provided.'],
+            ['foo', new \stdClass(), 'Header value must be scalar or null but stdClass provided.'],
         ];
     }
 
