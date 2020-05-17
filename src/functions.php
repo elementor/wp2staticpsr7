@@ -439,7 +439,7 @@ function hash(
  * Read a line from the stream up to the maximum allowed buffer length
  *
  * @param StreamInterface $stream    Stream to read from
- * @param int             $maxLength Maximum buffer length
+ * @param int|null        $maxLength Maximum buffer length
  *
  * @return string
  */
