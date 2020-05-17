@@ -510,7 +510,7 @@ function parse_response($message)
     $parts = explode(' ', $data['start-line'], 3);
 
     return new Response(
-        $parts[1],
+        (int) $parts[1],
         $data['headers'],
         $data['body'],
         explode('/', $parts[0])[1],
