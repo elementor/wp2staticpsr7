@@ -255,7 +255,7 @@ class ResponseTest extends BaseTest
      */
     public function testConstructResponseInvalidHeader($header, $headerValue, $expectedMessage)
     {
-        $this->expectException('InvalidArgumentException', $expectedMessage);
+        $this->expectExceptionGuzzle('InvalidArgumentException', $expectedMessage);
         new Response(200, [$header => $headerValue]);
     }
 
@@ -274,7 +274,7 @@ class ResponseTest extends BaseTest
     public function testWithInvalidHeader($header, $headerValue, $expectedMessage)
     {
         $r = new Response();
-        $this->expectException('InvalidArgumentException', $expectedMessage);
+        $this->expectExceptionGuzzle('InvalidArgumentException', $expectedMessage);
         $r->withHeader($header, $headerValue);
     }
 
@@ -315,7 +315,7 @@ class ResponseTest extends BaseTest
      */
     public function testConstructResponseWithNonIntegerStatusCode($invalidValues)
     {
-        $this->expectException('InvalidArgumentException', 'Status code must be an integer value.');
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Status code must be an integer value.');
         new Response($invalidValues);
     }
 
@@ -326,7 +326,7 @@ class ResponseTest extends BaseTest
     public function testResponseChangeStatusCodeWithNonInteger($invalidValues)
     {
         $response = new Response();
-        $this->expectException('InvalidArgumentException', 'Status code must be an integer value.');
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Status code must be an integer value.');
         $response->withStatus($invalidValues);
     }
 
@@ -346,7 +346,7 @@ class ResponseTest extends BaseTest
      */
     public function testConstructResponseWithInvalidRangeStatusCode($invalidValues)
     {
-        $this->expectException('InvalidArgumentException', 'Status code must be an integer value between 1xx and 5xx.');
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Status code must be an integer value between 1xx and 5xx.');
         new Response($invalidValues);
     }
 
@@ -357,7 +357,7 @@ class ResponseTest extends BaseTest
     public function testResponseChangeStatusCodeWithWithInvalidRange($invalidValues)
     {
         $response = new Response();
-        $this->expectException('InvalidArgumentException', 'Status code must be an integer value between 1xx and 5xx.');
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Status code must be an integer value between 1xx and 5xx.');
         $response->withStatus($invalidValues);
     }
 

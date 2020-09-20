@@ -28,10 +28,6 @@ class BufferStreamTest extends BaseTest
         $this->assertSame('', $b->read(10));
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Cannot determine the position of a BufferStream
-     */
     public function testCanCastToStringOrGetContents()
     {
         $b = new BufferStream();
@@ -40,6 +36,9 @@ class BufferStreamTest extends BaseTest
         $this->assertSame('foo', $b->read(3));
         $b->write('bar');
         $this->assertSame('bazbar', (string) $b);
+
+        $this->expectExceptionGuzzle('RuntimeException', 'Cannot determine the position of a BufferStream');
+
         $b->tell();
     }
 

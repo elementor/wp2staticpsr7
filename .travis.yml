@@ -26,6 +26,8 @@ matrix:
           dist: bionic
         - php: 7.4
           dist: bionic
+        - php: nightly
+          dist: bionic
     fast_finish: true
 
 before_install:
@@ -33,7 +35,8 @@ before_install:
     - if [[ "$TRAVIS_PHP_VERSION" == "hhvm-3.24" ]]; then travis_retry composer require "phpunit/phpunit:^5.7.27" --dev --no-update -n; fi
 
 install:
-    - travis_retry composer update --prefer-dist
+    - if [[ "$TRAVIS_PHP_VERSION" != "nightly" ]]; then travis_retry composer update --prefer-dist; fi
+    - if [[ "$TRAVIS_PHP_VERSION" == "nightly" ]]; then travis_retry composer update --prefer-dist --ignore-platform-reqs; fi
 
 script:
     - make test

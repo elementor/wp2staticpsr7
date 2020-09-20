@@ -53,9 +53,6 @@ class MessageTest extends BaseTest
         $this->assertSame(0, $body->tell());
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testThrowsWhenBodyCannotBeRewound()
     {
         $body = Psr7\Utils::streamFor('abc');
@@ -66,6 +63,9 @@ class MessageTest extends BaseTest
             },
         ]);
         $res = new Psr7\Response(200, [], $body);
+
+        $this->expectExceptionGuzzle('RuntimeException');
+
         Psr7\Message::rewindBody($res);
     }
 
@@ -132,12 +132,10 @@ class MessageTest extends BaseTest
         $this->assertSame('Bar Bam', $request->getHeaderLine('Foo'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid header syntax: Obsolete line folding
-     */
     public function testRequestParsingFailsWithFoldedHeadersOnHttp11()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Invalid header syntax: Obsolete line folding');
+
         Psr7\Message::parseResponse("GET_DATA / HTTP/1.1\r\nFoo: Bar\r\n Biz: Bam\r\n\r\n");
     }
 
@@ -151,11 +149,10 @@ class MessageTest extends BaseTest
         $this->assertSame('Bam', $request->getHeaderLine('Baz'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesRequestMessages()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         Psr7\Message::parseRequest("HTTP/1.1 200 OK\r\n\r\n");
     }
 
@@ -205,12 +202,10 @@ class MessageTest extends BaseTest
         $this->assertSame('Test', (string)$response->getBody());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid header syntax: Obsolete line folding
-     */
     public function testResponseParsingFailsWithFoldedHeadersOnHttp11()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Invalid header syntax: Obsolete line folding');
+
         Psr7\Message::parseResponse("HTTP/1.1 200\r\nFoo: Bar\r\n Biz: Bam\r\nBaz: Qux\r\n\r\nTest");
     }
 
@@ -226,20 +221,17 @@ class MessageTest extends BaseTest
         $this->assertSame("Test\n\nOtherTest", (string)$response->getBody());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid message: Missing header delimiter
-     */
     public function testResponseParsingFailsWithoutHeaderDelimiter()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Invalid message: Missing header delimiter');
+
         Psr7\Message::parseResponse("HTTP/1.0 200\r\nFoo: Bar\r\n Baz: Bam\r\nBaz: Qux\r\n");
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesResponseMessages()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         Psr7\Message::parseResponse("GET / HTTP/1.1\r\n\r\n");
     }
 

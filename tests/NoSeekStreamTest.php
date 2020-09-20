@@ -11,10 +11,6 @@ use GuzzleHttp\Psr7\NoSeekStream;
  */
 class NoSeekStreamTest extends BaseTest
 {
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Cannot seek a NoSeekStream
-     */
     public function testCannotSeek()
     {
         $s = $this->getMockBuilder('Psr\Http\Message\StreamInterface')
@@ -24,6 +20,9 @@ class NoSeekStreamTest extends BaseTest
         $s->expects($this->never())->method('isSeekable');
         $wrapped = new NoSeekStream($s);
         $this->assertFalse($wrapped->isSeekable());
+
+        $this->expectExceptionGuzzle('RuntimeException', 'Cannot seek a NoSeekStream');
+
         $wrapped->seek(2);
     }
 

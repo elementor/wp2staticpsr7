@@ -267,7 +267,7 @@ class ServerRequestTest extends BaseTest
 
     public function testNormalizeFilesRaisesException()
     {
-        $this->expectException('InvalidArgumentException', 'Invalid value in files specification');
+        $this->expectExceptionGuzzle('InvalidArgumentException', 'Invalid value in files specification');
         ServerRequest::normalizeFiles(['test' => 'something']);
     }
 

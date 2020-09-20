@@ -23,7 +23,10 @@ class StreamDecoratorTraitTest extends BaseTest
     /** @var resource */
     private $c;
 
-    protected function setUp()
+    /**
+     * @before
+     */
+    public function setUpTest()
     {
         $this->c = fopen('php://temp', 'r+');
         fwrite($this->c, 'foo');
@@ -44,7 +47,7 @@ class StreamDecoratorTraitTest extends BaseTest
         set_error_handler(function ($errNo, $str) use (&$msg) { $msg = $str; });
         echo new Str($s);
         restore_error_handler();
-        $this->assertContains('foo', $msg);
+        $this->assertStringContainsStringGuzzle('foo', $msg);
     }
 
     public function testToString()
@@ -115,20 +118,19 @@ class StreamDecoratorTraitTest extends BaseTest
         $this->assertSame('foofoo', (string) $this->a);
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     */
     public function testThrowsWithInvalidGetter()
     {
+        $this->expectExceptionGuzzle('UnexpectedValueException');
+
         $this->b->foo;
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
     public function testThrowsWhenGetterNotImplemented()
     {
         $s = new BadStream();
+
+        $this->expectExceptionGuzzle('BadMethodCallException');
+
         $s->stream;
     }
 }

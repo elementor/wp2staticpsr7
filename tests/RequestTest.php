@@ -25,11 +25,10 @@ class RequestTest extends BaseTest
         $this->assertSame($uri, $r->getUri());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidateRequestUri()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         new Request('GET', '///');
     }
 
@@ -97,7 +96,7 @@ class RequestTest extends BaseTest
      */
     public function testConstructWithInvalidMethods($method)
     {
-        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionGuzzle('InvalidArgumentException');
         new Request($method, '/');
     }
 
@@ -107,7 +106,7 @@ class RequestTest extends BaseTest
     public function testWithInvalidMethods($method)
     {
         $r = new Request('get', '/');
-        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionGuzzle('InvalidArgumentException');
         $r->withMethod($method);
     }
 
@@ -136,11 +135,10 @@ class RequestTest extends BaseTest
         $this->assertSame('/', $r1->getRequestTarget());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testRequestTargetDoesNotAllowSpaces()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         $r1 = new Request('GET', '/');
         $r1->withRequestTarget('/foo bar');
     }
