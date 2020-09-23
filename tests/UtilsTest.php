@@ -157,13 +157,13 @@ class UtilsTest extends BaseTest
         $this->assertSame(md5('foobazbar'), Psr7\Utils::hash($s, 'md5'));
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testCalculatesHashThrowsWhenSeekFails()
     {
         $s = new NoSeekStream(Psr7\Utils::streamFor('foobazbar'));
         $s->read(2);
+
+        $this->expectExceptionGuzzle('RuntimeException');
+
         Psr7\Utils::hash($s, 'md5');
     }
 
@@ -178,16 +178,14 @@ class UtilsTest extends BaseTest
     public function testOpensFilesSuccessfully()
     {
         $r = Psr7\Utils::tryFopen(__FILE__, 'r');
-        $this->assertInternalType('resource', $r);
+        $this->assertInternalTypeGuzzle('resource', $r);
         fclose($r);
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Unable to open /path/to/does/not/exist using mode r
-     */
     public function testThrowsExceptionNotWarning()
     {
+        $this->expectExceptionGuzzle('RuntimeException', 'Unable to open /path/to/does/not/exist using mode r');
+
         Psr7\Utils::tryFopen('/path/to/does/not/exist', 'r');
     }
 
@@ -200,11 +198,10 @@ class UtilsTest extends BaseTest
         );
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesUri()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         Psr7\Utils::uriFor([]);
     }
 
@@ -259,11 +256,10 @@ class UtilsTest extends BaseTest
         $this->assertSame($s, Psr7\Utils::streamFor($s));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testThrowsExceptionForUnknown()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         Psr7\Utils::streamFor(new \stdClass());
     }
 

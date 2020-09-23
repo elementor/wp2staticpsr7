@@ -8,7 +8,10 @@ class LazyOpenStreamTest extends BaseTest
 {
     private $fname;
 
-    protected function setUp()
+    /**
+     * @before
+     */
+    public function setUpTest()
     {
         $this->fname = tempnam(sys_get_temp_dir(), 'tfile');
 
@@ -17,7 +20,10 @@ class LazyOpenStreamTest extends BaseTest
         }
     }
 
-    protected function tearDown()
+    /**
+     * @after
+     */
+    public function tearDownTest()
     {
         if (file_exists($this->fname)) {
             unlink($this->fname);
@@ -28,7 +34,7 @@ class LazyOpenStreamTest extends BaseTest
     {
         $l = new LazyOpenStream($this->fname, 'w+');
         $l->write('foo');
-        $this->assertInternalType('array', $l->getMetadata());
+        $this->assertInternalTypeGuzzle('array', $l->getMetadata());
         $this->assertFileExists($this->fname);
         $this->assertSame('foo', file_get_contents($this->fname));
         $this->assertSame('foo', (string) $l);
@@ -48,7 +54,7 @@ class LazyOpenStreamTest extends BaseTest
         $this->assertSame('oo', $l->getContents());
         $this->assertSame('foo', (string) $l);
         $this->assertSame(3, $l->getSize());
-        $this->assertInternalType('array', $l->getMetadata());
+        $this->assertInternalTypeGuzzle('array', $l->getMetadata());
         $l->close();
     }
 
@@ -57,7 +63,7 @@ class LazyOpenStreamTest extends BaseTest
         file_put_contents($this->fname, 'foo');
         $l = new LazyOpenStream($this->fname, 'r');
         $r = $l->detach();
-        $this->assertInternalType('resource', $r);
+        $this->assertInternalTypeGuzzle('resource', $r);
         fseek($r, 0);
         $this->assertSame('foo', stream_get_contents($r));
         fclose($r);

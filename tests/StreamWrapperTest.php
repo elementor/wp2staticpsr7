@@ -75,12 +75,9 @@ class StreamWrapperTest extends BaseTest
         ];
         $write = null;
         $except = null;
-        $this->assertInternalType('integer', stream_select($streams, $write, $except, 0));
+        $this->assertInternalTypeGuzzle('integer', stream_select($streams, $write, $except, 0));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesStream()
     {
         $stream = $this->getMockBuilder('Psr\Http\Message\StreamInterface')
@@ -92,14 +89,16 @@ class StreamWrapperTest extends BaseTest
         $stream->expects($this->once())
             ->method('isWritable')
             ->will($this->returnValue(false));
+
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         StreamWrapper::getResource($stream);
     }
 
-    /**
-     * @expectedException \PHPUnit\Framework\Error\Warning
-     */
     public function testReturnsFalseWhenStreamDoesNotExist()
     {
+        $this->expectWarningGuzzle();
+
         fopen('guzzle://foo', 'r');
     }
 
@@ -115,7 +114,7 @@ class StreamWrapperTest extends BaseTest
             ->method('isWritable')
             ->will($this->returnValue(true));
         $r = StreamWrapper::getResource($stream);
-        $this->assertInternalType('resource', $r);
+        $this->assertInternalTypeGuzzle('resource', $r);
         fclose($r);
     }
 

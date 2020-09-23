@@ -12,11 +12,10 @@ class StreamTest extends BaseTest
 {
     public static $isFReadError = false;
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testConstructorThrowsExceptionOnInvalidArgument()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         new Stream(true);
     }
 
@@ -29,7 +28,7 @@ class StreamTest extends BaseTest
         $this->assertTrue($stream->isWritable());
         $this->assertTrue($stream->isSeekable());
         $this->assertSame('php://temp', $stream->getMetadata('uri'));
-        $this->assertInternalType('array', $stream->getMetadata());
+        $this->assertInternalTypeGuzzle('array', $stream->getMetadata());
         $this->assertSame(4, $stream->getSize());
         $this->assertFalse($stream->eof());
         $stream->close();
@@ -44,7 +43,7 @@ class StreamTest extends BaseTest
         $this->assertTrue($stream->isWritable());
         $this->assertTrue($stream->isSeekable());
         $this->assertSame('php://temp', $stream->getMetadata('uri'));
-        $this->assertInternalType('array', $stream->getMetadata());
+        $this->assertInternalTypeGuzzle('array', $stream->getMetadata());
         $this->assertSame(4, $stream->getSize());
         $this->assertFalse($stream->eof());
         $stream->close();
@@ -159,7 +158,7 @@ class StreamTest extends BaseTest
         $handle = fopen('php://temp', 'r');
         $stream = new Stream($handle);
         $this->assertSame($handle, $stream->detach());
-        $this->assertInternalType('resource', $handle, 'Stream is not closed');
+        $this->assertInternalTypeGuzzle('resource', $handle, 'Stream is not closed');
         $this->assertNull($stream->detach());
 
         $this->assertStreamStateAfterClosedOrDetached($stream);
@@ -191,7 +190,7 @@ class StreamTest extends BaseTest
             try {
                 $fn();
             } catch (\Exception $e) {
-                $this->assertContains('Stream is detached', $e->getMessage());
+                $this->assertStringContainsStringGuzzle('Stream is detached', $e->getMessage());
 
                 return;
             }
@@ -218,14 +217,12 @@ class StreamTest extends BaseTest
         $stream->close();
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Length parameter cannot be negative
-     */
     public function testStreamReadingWithNegativeLength()
     {
         $r = fopen('php://temp', 'r');
         $stream = new Stream($r);
+
+        $this->expectExceptionGuzzle('RuntimeException', 'Length parameter cannot be negative');
 
         try {
             $stream->read(-1);
@@ -237,15 +234,13 @@ class StreamTest extends BaseTest
         $stream->close();
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Unable to read from stream
-     */
     public function testStreamReadingFreadError()
     {
         self::$isFReadError = true;
         $r = fopen('php://temp', 'r');
         $stream = new Stream($r);
+
+        $this->expectExceptionGuzzle('RuntimeException', 'Unable to read from stream');
 
         try {
             $stream->read(1);

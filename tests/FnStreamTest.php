@@ -10,12 +10,10 @@ use GuzzleHttp\Psr7\FnStream;
  */
 class FnStreamTest extends BaseTest
 {
-    /**
-     * @expectedException \BadMethodCallException
-     * @expectedExceptionMessage seek() is not implemented in the FnStream
-     */
     public function testThrowsWhenNotImplemented()
     {
+        $this->expectExceptionGuzzle('BadMethodCallException', 'seek() is not implemented in the FnStream');
+
         (new FnStream([]))->seek(1);
     }
 
@@ -72,7 +70,7 @@ class FnStreamTest extends BaseTest
         $b->seek(0, SEEK_END);
         $b->write('bar');
         $this->assertSame('foobar', (string) $b);
-        $this->assertInternalType('resource', $b->detach());
+        $this->assertInternalTypeGuzzle('resource', $b->detach());
         $b->close();
     }
 
@@ -94,7 +92,7 @@ class FnStreamTest extends BaseTest
     {
         $a = new FnStream([]);
         $b = serialize($a);
-        $this->expectException('\LogicException', 'FnStream should never be unserialized');
+        $this->expectExceptionGuzzle('\LogicException', 'FnStream should never be unserialized');
         unserialize($b);
     }
 }

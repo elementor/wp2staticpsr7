@@ -16,13 +16,19 @@ class CachingStreamTest extends BaseTest
     /** @var Stream */
     private $decorated;
 
-    protected function setUp()
+    /**
+     * @before
+     */
+    public function setUpTest()
     {
         $this->decorated = Psr7\Utils::streamFor('testing');
         $this->body = new CachingStream($this->decorated);
     }
 
-    protected function tearDown()
+    /**
+     * @after
+     */
+    public function tearDownTest()
     {
         $this->decorated->close();
         $this->body->close();
@@ -150,31 +156,31 @@ class CachingStreamTest extends BaseTest
         $this->assertSame("0001\n", Psr7\Utils::readLine($body));
         // Write over part of the body yet to be read, so skip some bytes
         $this->assertSame(5, $body->write("TEST\n"));
-        $this->assertSame(5, $this->readAttribute($body, 'skipReadBytes'));
+        $this->assertSame(5, Helpers::readObjectAttribute($body, 'skipReadBytes'));
         // Read, which skips bytes, then reads
         $this->assertSame("0003\n", Psr7\Utils::readLine($body));
-        $this->assertSame(0, $this->readAttribute($body, 'skipReadBytes'));
+        $this->assertSame(0, Helpers::readObjectAttribute($body, 'skipReadBytes'));
         $this->assertSame("0004\n", Psr7\Utils::readLine($body));
         $this->assertSame("0005\n", Psr7\Utils::readLine($body));
 
         // Overwrite part of the cached body (so don't skip any bytes)
         $body->seek(5);
         $this->assertSame(5, $body->write("ABCD\n"));
-        $this->assertSame(0, $this->readAttribute($body, 'skipReadBytes'));
+        $this->assertSame(0, Helpers::readObjectAttribute($body, 'skipReadBytes'));
         $this->assertSame("TEST\n", Psr7\Utils::readLine($body));
         $this->assertSame("0003\n", Psr7\Utils::readLine($body));
         $this->assertSame("0004\n", Psr7\Utils::readLine($body));
         $this->assertSame("0005\n", Psr7\Utils::readLine($body));
         $this->assertSame("0006\n", Psr7\Utils::readLine($body));
         $this->assertSame(5, $body->write("1234\n"));
-        $this->assertSame(5, $this->readAttribute($body, 'skipReadBytes'));
+        $this->assertSame(5, Helpers::readObjectAttribute($body, 'skipReadBytes'));
 
         // Seek to 0 and ensure the overwritten bit is replaced
         $body->seek(0);
         $this->assertSame("0000\nABCD\nTEST\n0003\n0004\n0005\n0006\n1234\n0008\n0009\n", $body->read(50));
 
         // Ensure that casting it to a string does not include the bit that was overwritten
-        $this->assertContains("0000\nABCD\nTEST\n0003\n0004\n0005\n0006\n1234\n0008\n0009\n", (string) $body);
+        $this->assertStringContainsStringGuzzle("0000\nABCD\nTEST\n0003\n0004\n0005\n0006\n1234\n0008\n0009\n", (string) $body);
     }
 
     public function testClosesBothStreams()
@@ -186,11 +192,10 @@ class CachingStreamTest extends BaseTest
         $this->assertFalse(is_resource($s));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresValidWhence()
     {
+        $this->expectExceptionGuzzle('InvalidArgumentException');
+
         $this->body->seek(10, -123456);
     }
 }
