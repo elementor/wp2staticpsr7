@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.7.0] - 2020-09-30
+
 ### Added
 
 - Replaced functions by static methods
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Converting a non-seekable stream to a string
 - Handle multiple Set-Cookie correctly
 - Ignore array keys in header values when merging
+- Allow multibyte characters to be parsed in `Message:bodySummary()`
 
 ### Changed
 
