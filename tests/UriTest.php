@@ -130,11 +130,11 @@ class UriTest extends BaseTest
         (new Uri())->withPort(-1);
     }
 
-    public function testParseUriPortCannotBeZero()
+    public function testParseUriPortCannotBeNegative()
     {
         $this->expectExceptionGuzzle('InvalidArgumentException', 'Unable to parse URI');
 
-        new Uri('//example.com:0');
+        new Uri('//example.com:-1');
     }
 
     public function testSchemeMustHaveCorrectType()
