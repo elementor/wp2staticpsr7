@@ -1,7 +1,7 @@
 {
-    "name": "guzzlehttp/psr7",
+    "name": "leonstafford/wp2staticpsr7",
     "type": "library",
-    "description": "PSR-7 message implementation that also provides common utility methods",
+    "description": "Safely namespaced guzzle psr7 for WP2Static",
     "keywords": ["request", "response", "message", "stream", "http", "uri", "url", "psr-7"],
     "license": "MIT",
     "authors": [
@@ -32,13 +32,13 @@
     },
     "autoload": {
         "psr-4": {
-            "GuzzleHttp\\Psr7\\": "src/"
+            "WP2StaticGuzzleHttp\\Psr7\\": "src/"
         },
         "files": ["src/functions_include.php"]
     },
     "autoload-dev": {
         "psr-4": {
-            "GuzzleHttp\\Tests\\Psr7\\": "tests/"
+            "WP2StaticGuzzleHttp\\Tests\\Psr7\\": "tests/"
         }
     },
     "extra": {

@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Psr7;
+namespace WP2StaticGuzzleHttp\Psr7;
 
 use InvalidArgumentException;
 use Psr\Http\Message\StreamInterface;
