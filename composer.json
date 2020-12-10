@@ -41,9 +41,4 @@
             "WP2StaticGuzzleHttp\\Tests\\Psr7\\": "tests/"
         }
     },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.7-dev"
-        }
-    }
 }
