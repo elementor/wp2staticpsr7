@@ -40,5 +40,5 @@
         "psr-4": {
             "WP2StaticGuzzleHttp\\Tests\\Psr7\\": "tests/"
         }
-    },
+    }
 }
